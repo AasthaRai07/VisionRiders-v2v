@@ -3,8 +3,19 @@
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function Dashboard() {
+  const router = useRouter();
+
+  useEffect(() => {
+    // Route guard: check for user session
+    const session = localStorage.getItem('user_session');
+    if (!session) {
+      router.push('/login');
+    }
+  }, [router]);
+
   useEffect(() => {
     // Simple parallax effect for ambient particles (if any)
     const handleMouseMove = (e) => {

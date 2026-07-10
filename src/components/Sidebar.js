@@ -1,6 +1,16 @@
+'use client';
+
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function Sidebar({ activeItem = 'home' }) {
+  const router = useRouter();
+
+  const handleLogout = () => {
+    localStorage.removeItem('user_session');
+    router.push('/login');
+  };
+
   const navItems = [
     { name: 'Home', icon: 'home', href: '/dashboard', id: 'home' },
     { name: 'Learn', icon: 'school', href: '/learning', id: 'learn' },
@@ -41,8 +51,11 @@ export default function Sidebar({ activeItem = 'home' }) {
         ))}
       </ul>
       <div className="mt-auto">
-        <button className="w-full bg-[#FFB300] hover:bg-opacity-90 text-[#3f293b] font-body-md text-body-md font-medium py-3 rounded-xl transition-all duration-300 ease-in-out shadow-[0_0_15px_rgba(255,179,0,0.3)] hover:shadow-[0_0_20px_rgba(255,179,0,0.5)]">
-          Get Started
+        <button 
+          onClick={handleLogout}
+          className="w-full bg-[#FFB300] hover:bg-opacity-90 text-[#3f293b] font-body-md text-body-md font-medium py-3 rounded-xl transition-all duration-300 ease-in-out shadow-[0_0_15px_rgba(255,179,0,0.3)] hover:shadow-[0_0_20px_rgba(255,179,0,0.5)]"
+        >
+          Log Out
         </button>
       </div>
     </nav>
