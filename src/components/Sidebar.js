@@ -11,7 +11,6 @@ export default function Sidebar({ activeItem = 'home' }) {
     { name: 'Interview Coach', icon: 'smart_toy', href: '/interview-coach', id: 'interview-coach' },
     { name: 'Jobs', icon: 'work', href: '/jobs', id: 'jobs' },
     { name: 'Community', icon: 'groups', href: '/community', id: 'community' },
-    { name: 'Success Stories', icon: 'auto_awesome', href: '/success-stories', id: 'success-stories' },
     { name: 'Profile', icon: 'person', href: '/profile', id: 'profile' },
   ];
 
