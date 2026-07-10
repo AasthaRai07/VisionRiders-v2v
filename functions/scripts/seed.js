@@ -1,6 +1,8 @@
-const admin = require('firebase-admin');
+const admin = process.env.USE_MOCK_DB === 'true'
+  ? require('../mock-firebase-admin')
+  : require('firebase-admin');
 
-if (!process.env.FIRESTORE_EMULATOR_HOST) {
+if (process.env.USE_MOCK_DB !== 'true' && !process.env.FIRESTORE_EMULATOR_HOST) {
   process.env.FIRESTORE_EMULATOR_HOST = 'localhost:8080';
 }
 

@@ -2,12 +2,28 @@
 
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function ProfileSettings() {
   const [pushEnabled, setPushEnabled] = useState(true);
   const [emailEnabled, setEmailEnabled] = useState(false);
   const [digestEnabled, setDigestEnabled] = useState(true);
+
+  const [userFullName, setUserFullName] = useState('Aditi Sharma');
+  const [userEmail, setUserEmail] = useState('aditi.s@example.com');
+
+  useEffect(() => {
+    const session = localStorage.getItem('user_session');
+    if (session) {
+      try {
+        const parsed = JSON.parse(session);
+        if (parsed.fullName) setUserFullName(parsed.fullName);
+        if (parsed.email) setUserEmail(parsed.email);
+      } catch (err) {
+        console.error('Error parsing user session in Profile:', err);
+      }
+    }
+  }, []);
 
   return (
     <div className="relative text-on-surface flex-grow flex flex-col min-h-screen">
@@ -31,7 +47,7 @@ export default function ProfileSettings() {
               </div>
             </div>
           </div>
-          <h2 className="font-headline-lg-mobile md:font-headline-lg text-on-surface mb-2">Aditi Sharma</h2>
+          <h2 className="font-headline-lg-mobile md:font-headline-lg text-on-surface mb-2">{userFullName}</h2>
           <div className="glass-panel px-4 py-1.5 rounded-full mb-6 inline-flex items-center gap-2">
             <span className="material-symbols-outlined text-tertiary-fixed-dim text-sm" style={{fontVariationSettings: "'FILL' 1"}}>stars</span>
             <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">ElevateHer Track</span>
@@ -55,7 +71,7 @@ export default function ProfileSettings() {
                 <div className="flex justify-between items-center py-2 border-b border-glass-border/50 group">
                   <div>
                     <p className="text-sm text-outline-variant">Name</p>
-                    <p className="font-body-md text-body-md text-on-surface">Aditi Sharma</p>
+                    <p className="font-body-md text-body-md text-on-surface">{userFullName}</p>
                   </div>
                   <button className="text-outline-variant hover:text-primary transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
                     <span className="material-symbols-outlined text-sm">edit</span>
@@ -64,7 +80,7 @@ export default function ProfileSettings() {
                 <div className="flex justify-between items-center py-2 border-b border-glass-border/50 group">
                   <div>
                     <p className="text-sm text-outline-variant">Email</p>
-                    <p className="font-body-md text-body-md text-on-surface">aditi.s@example.com</p>
+                    <p className="font-body-md text-body-md text-on-surface">{userEmail}</p>
                   </div>
                   <button className="text-outline-variant hover:text-primary transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
                     <span className="material-symbols-outlined text-sm">edit</span>

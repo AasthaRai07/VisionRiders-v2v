@@ -167,7 +167,11 @@ export default function PersonaQuestions({ onBack, onSubmit, onboardingData }) {
 
     setTimeout(() => {
       // Mock session saving
-      const session = { email: onboardingData.email || 'new_user@hernova.com', token: 'mock-jwt-token-onboarding-456' };
+      const session = { 
+        email: onboardingData.email || 'new_user@hernova.com', 
+        token: 'mock-jwt-token-onboarding-456',
+        fullName: onboardingData.fullName || 'New User'
+      };
       localStorage.setItem('user_session', JSON.stringify(session));
 
       // Save user to simulated DB to allow login later

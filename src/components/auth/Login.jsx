@@ -41,7 +41,11 @@ export default function Login({ onBack, onLoginSuccess, onSelectSignUp }) {
         const session = { 
           email: email.toLowerCase(), 
           token: 'mock-jwt-token-123',
-          fullName: matchUser ? matchUser.fullName : 'Test User'
+          fullName: matchUser ? matchUser.fullName : 'Test User',
+          persona: matchUser ? (matchUser.persona || 'returnship') : 'returnship',
+          skills: matchUser ? (matchUser.skills || ['React', 'JavaScript', 'Node.js']) : ['React', 'JavaScript', 'Node.js'],
+          resumeText: matchUser ? (matchUser.resumeText || '') : 'Experienced software developer with skillsets in React, Node, and JavaScript. Focuses on frontend engineering and cloud deployments.',
+          atsScore: matchUser ? (matchUser.atsScore || null) : 85
         };
         localStorage.setItem('user_session', JSON.stringify(session));
         setIsLoading(false);
@@ -73,16 +77,20 @@ export default function Login({ onBack, onLoginSuccess, onSelectSignUp }) {
       // Redirect new Google user to /signup (Persona Selection step)
       router.push('/signup');
     } catch (err) {
-      console.error("Google login failed", err);
       setIsGoogleLoading(false);
-
-      if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
+      if (err.code === 'auth/popup-closed-by-user') {
+        console.warn("User closed Google sign-in popup.");
+        setError('Google sign-in popup was closed before completion. Please try again.');
+      } else if (err.code === 'auth/cancelled-popup-request') {
         setError('Google sign-in was cancelled.');
       } else if (err.code === 'auth/unauthorized-domain') {
+        console.error("Google login failed", err);
         setError('This domain is not authorized for Firebase Auth. Please verify that localhost is added to the Authorized Domains list in the Firebase Console (Authentication -> Settings).');
       } else if (err.code === 'auth/network-request-failed') {
+        console.error("Google login failed", err);
         setError('A network error occurred. Please check your internet connection and try again.');
       } else {
+        console.error("Google login failed", err);
         setError(err.message || 'Google sign-in failed. Please try again.');
       }
     }

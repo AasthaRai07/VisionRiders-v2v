@@ -212,12 +212,28 @@ export default function AdditionalDetails({ onBack, onSubmit, onboardingData }) 
     console.log('--- FINAL ONBOARDING DATA SUBMITTED ---');
     console.log(finalCollectedData);
 
+    // Extract skills prioritizing resume-extracted skills if available
+    let extractedSkills = [];
+    if (onboardingData.resumeSkills && onboardingData.resumeSkills.length > 0) {
+      extractedSkills = onboardingData.resumeSkills;
+    } else if (onboardingData.persona === 'professional' && specificData.professionalSkills) {
+      extractedSkills = specificData.professionalSkills;
+    } else if (onboardingData.persona === 'fresher' && specificData.fresherSkills) {
+      extractedSkills = specificData.fresherSkills;
+    } else if (onboardingData.persona === 'student' && specificData.studentCourses) {
+      extractedSkills = specificData.studentCourses;
+    }
+
     setTimeout(() => {
       // Mock session saving
       const session = { 
         email: onboardingData.email || 'google_user@hernova.com', 
         token: 'mock-jwt-token-onboarding-456',
-        fullName: onboardingData.fullName || 'Google User'
+        fullName: onboardingData.fullName || 'Google User',
+        persona: onboardingData.persona || 'returnship',
+        skills: extractedSkills.length > 0 ? extractedSkills : ['React', 'JavaScript', 'Node.js'],
+        resumeText: onboardingData.resumeText || '',
+        atsScore: onboardingData.atsScore || null
       };
       localStorage.setItem('user_session', JSON.stringify(session));
 
@@ -233,6 +249,10 @@ export default function AdditionalDetails({ onBack, onSubmit, onboardingData }) 
           email: onboardingData.email,
           password: onboardingData.password,
           fullName: onboardingData.fullName,
+          persona: onboardingData.persona || 'returnship',
+          skills: extractedSkills.length > 0 ? extractedSkills : ['React', 'JavaScript', 'Node.js'],
+          resumeText: onboardingData.resumeText || '',
+          atsScore: onboardingData.atsScore || null
         });
         localStorage.setItem('hernova_registered_users', JSON.stringify(registeredUsers));
       }

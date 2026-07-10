@@ -31,6 +31,8 @@ const BACKEND_URL = 'http://localhost:3001';
 
 export default function Dashboard() {
   const router = useRouter();
+  const [userName, setUserName] = useState('Aditi');
+  const [userFullName, setUserFullName] = useState('Aditi Roy');
 
   const [status, setStatus] = useState('idle'); // idle | requesting | sharing | error | denied
   const [address, setAddress] = useState('');
@@ -150,6 +152,22 @@ export default function Dashboard() {
     const session = localStorage.getItem('user_session');
     if (!session) {
       router.push('/login');
+    } else {
+      try {
+        const parsed = JSON.parse(session);
+        if (parsed.fullName) {
+          setUserFullName(parsed.fullName);
+          const first = parsed.fullName.trim().split(/\s+/)[0];
+          setUserName(first);
+          
+          setAdminUsers(prev => [
+            { name: parsed.fullName, email: parsed.email || 'user@hernova.com', status: 'Approved' },
+            ...prev.slice(1)
+          ]);
+        }
+      } catch (err) {
+        console.error('Error parsing user session:', err);
+      }
     }
   }, [router]);
 
@@ -439,7 +457,7 @@ export default function Dashboard() {
     if (!newPostContent.trim()) return;
     const newPost = {
       id: feedPosts.length + 1,
-      author: 'Aditi Roy',
+      author: userFullName,
       content: newPostContent,
       likes: 0,
       comments: []
@@ -484,11 +502,11 @@ export default function Dashboard() {
         <div className="mb-stack-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-primary shadow-[0_0_10px_rgba(194,24,91,0.2)]">
-              <img className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCdF-QlM2QFdD4FQmOmqgRcu5EINIhYUaBu29EfgnaSnSpHdrY0K3Q6wlYObUPKjBsvNfQsgiVjyK88UKBYIqrDFHFd6YUbBFZwVDpdAc29E_hKKiL4D5Te8rtRK_8M4SMVz-rmOhl6hRvYxTowtG60rNeQdbnRv14BR0iraqIcYhJwVhbxZStD8BAM-zl1JH1LhqJSrIC2HLwOrHwDMlrIHz7KxMGbeUnK9YyCjasEEFuGNsMV03TPvgbXq8Y885cOmg0c4g_iUW4" alt="Aditi Roy" />
+              <img className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCdF-QlM2QFdD4FQmOmqgRcu5EINIhYUaBu29EfgnaSnSpHdrY0K3Q6wlYObUPKjBsvNfQsgiVjyK88UKBYIqrDFHFd6YUbBFZwVDpdAc29E_hKKiL4D5Te8rtRK_8M4SMVz-rmOhl6hRvYxTowtG60rNeQdbnRv14BR0iraqIcYhJwVhbxZStD8BAM-zl1JH1LhqJSrIC2HLwOrHwDMlrIHz7KxMGbeUnK9YyCjasEEFuGNsMV03TPvgbXq8Y885cOmg0c4g_iUW4" alt={userFullName} />
             </div>
             <div>
               <h2 className="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background flex items-center gap-2">
-                {getGreeting()}, Aditi
+                {getGreeting()}, {userName}
                 <span className="text-tertiary-fixed-dim inline-block ml-1">
                   <svg className="w-8 h-8 text-tertiary-fixed-dim animate-[spin_10s_linear_infinite]" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"></path>
