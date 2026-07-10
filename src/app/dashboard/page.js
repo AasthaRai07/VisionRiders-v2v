@@ -718,7 +718,7 @@ export default function Dashboard() {
           
           {/* Vertical Stack for smaller widgets */}
           <div className="flex flex-col gap-stack-lg col-span-1 md:col-span-2">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-stack-lg">
+            <div className="grid grid-cols-1 md:grid-cols-1 gap-stack-lg">
               {/* Continue Learning */}
               <div 
                 onClick={() => setQuizOpen(true)}
@@ -740,36 +740,6 @@ export default function Dashboard() {
                 </div>
               </div>
               
-              {/* Mentor Match */}
-              <div className="glass-panel rounded-xl p-5 flex flex-col justify-between min-h-[200px] md:min-h-[220px]">
-                <div className="flex justify-between items-start mb-1">
-                  <h4 className="font-body-lg text-body-lg text-on-background">Mentor Match</h4>
-                  <span className="material-symbols-outlined text-tertiary-fixed-dim text-sm">1k</span>
-                </div>
-                <div>
-                  <p className="font-body-md text-body-md text-on-surface-variant mb-2.5 text-xs">Based on your tech career goals.</p>
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-primary-fixed-dim">
-                      <img className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCdF-QlM2QFdD4FQmOmqgRcu5EINIhYUaBu29EfgnaSnSpHdrY0K3Q6wlYObUPKjBsvNfQsgiVjyK88UKBYIqrDFHFd6YUbBFZwVDpdAc29E_hKKiL4D5Te8rtRK_8M4SMVz-rmOhl6hRvYxTowtG60rNeQdbnRv14BR0iraqIcYhJwVhbxZStD8BAM-zl1JH1LhqJSrIC2HLwOrHwDMlrIHz7KxMGbeUnK9YyCjasEEFuGNsMV03TPvgbXq8Y885cOmg0c4g_iUW4"/>
-                    </div>
-                    <div>
-                      <p className="font-body-md text-body-md text-on-background font-medium text-sm">Priya Sharma</p>
-                      <p className="font-label-sm text-label-sm text-on-surface-variant text-[11px]">VP Engineering</p>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={() => handleConnectMentor('Priya Sharma')}
-                    disabled={connectedMentors.includes('Priya Sharma')}
-                    className={`w-full font-label-sm text-[10px] py-2 px-3 rounded-lg uppercase tracking-wider font-semibold text-center border transition-all ${
-                      connectedMentors.includes('Priya Sharma') 
-                        ? 'bg-success-emerald/10 border-success-emerald/20 text-success-emerald' 
-                        : 'bg-transparent border-primary text-primary hover:bg-primary hover:text-white'
-                    }`}
-                  >
-                    {connectedMentors.includes('Priya Sharma') ? 'Connection Requested ✔' : 'Request Connection'}
-                  </button>
-                </div>
-              </div>
             </div>
             
             {/* Savings Goal (Wide Chart Widget) */}
@@ -856,156 +826,18 @@ export default function Dashboard() {
                 </button>
               </form>
             </div>
-            
-            <span className="text-[10px] text-on-surface-variant mt-4 italic block">Checklists synchronize with reskilling paths.</span>
           </div>
         </div>
 
-        {/* Geolocated Events Map Row */}
+        {/* Emergency Safety Widget - Full Width */}
         <div className="mb-stack-lg">
-          {/* Geolocation events */}
-          <div className="glass-panel rounded-xl p-5 flex flex-col justify-between w-full">
-            <div>
-              <h3 className="font-body-lg text-body-lg font-semibold text-on-background mb-1 flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary text-base">map</span>
-                <span>Nearby Networking & NGO Events</span>
-              </h3>
-              <p className="text-[10px] text-on-surface-variant mb-3 leading-relaxed">Geolocated programs in Bengaluru convention tracks.</p>
-              
-              <div className="flex flex-col gap-2.5">
-                {nearbyEvents.map(ev => (
-                  <div key={ev.id} className="p-2.5 bg-glass-overlay/10 border border-glass-border rounded-lg text-[11px] flex justify-between items-center">
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        <a 
-                          href={ev.applyUrl || '#'} 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
-                          className="font-semibold text-on-background hover:text-primary hover:underline transition-colors cursor-pointer"
-                        >
-                          {ev.title}
-                        </a>
-                        <span className="text-[8px] bg-primary/10 text-primary px-1.5 py-0.2 rounded font-bold uppercase shrink-0">{ev.type}</span>
-                      </div>
-                      <p className="text-[10px] text-on-surface-variant mt-1">📍 {ev.location}</p>
-                    </div>
-                    <div className="flex gap-2 shrink-0">
-                      {ev.applyUrl && (
-                        <a href={ev.applyUrl} target="_blank" rel="noopener noreferrer" className="bg-[#FFB300] hover:bg-opacity-95 text-[#281526] font-bold text-[10px] py-1.5 px-3.5 rounded-lg uppercase tracking-wider transition-all">
-                          Apply
-                        </a>
-                      )}
-                      <a href={ev.mapsUrl} target="_blank" rel="noopener noreferrer" className="bg-transparent border border-primary text-primary hover:bg-primary hover:text-white font-bold text-[10px] py-1.5 px-3.5 rounded-lg uppercase tracking-wider transition-all">
-                        Directions
-                      </a>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <button onClick={() => router.push('/events')} className="text-primary font-label-sm text-[10px] uppercase font-bold text-center w-full mt-4 hover:underline">
-              View Event Maps Grid →
-            </button>
-          </div>
-        </div>
-
-        {/* Row: Community Feed & AI Opportunities */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-stack-lg mb-stack-lg">
-          {/* Opportunities Section */}
-          <div className="glass-panel rounded-xl p-5 flex flex-col justify-between">
-            <div>
-              <h3 className="font-body-lg text-body-lg font-semibold text-on-background mb-3 flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary text-base">work_outline</span>
-                <span>AI Recommended Opportunities</span>
-              </h3>
-              
-              <div className="flex flex-col gap-2.5">
-                {opportunities.map((opp, index) => (
-                  <div key={index} className="p-3 bg-glass-overlay/10 border border-glass-border rounded-lg text-[11px] flex justify-between items-center">
-                    <div>
-                      <h4 className="font-bold text-on-background text-xs">
-                        <a 
-                          href={opp.link} 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
-                          className="hover:text-primary hover:underline transition-colors cursor-pointer"
-                        >
-                          {opp.title}
-                        </a>
-                      </h4>
-                      <p className="text-[10px] text-on-surface-variant mt-0.5">{opp.company} • {opp.location}</p>
-                      <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-semibold mt-1 inline-block">{opp.type}</span>
-                    </div>
-                    <a href={opp.link} target="_blank" rel="noopener noreferrer" className="bg-[#FFB300] hover:bg-opacity-95 text-[#281526] font-bold text-[10px] py-1.5 px-3.5 rounded-lg uppercase tracking-wider shrink-0 transition-all">
-                      Apply
-                    </a>
-                  </div>
-                ))}
-              </div>
-            </div>
-            
-            <button onClick={() => router.push('/jobs')} className="text-primary font-label-sm text-[10px] uppercase font-bold text-center w-full mt-4 hover:underline">
-              View Jobs & Internship Feeds →
-            </button>
-          </div>
-
-          {/* Community Feed Section */}
-          <div className="glass-panel rounded-xl p-5 flex flex-col justify-between">
-            <div>
-              <h3 className="font-body-lg text-body-lg font-semibold text-on-background mb-3 flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary text-base">forum</span>
-                <span>HerNova Community Feed</span>
-              </h3>
-              
-              {/* Add Post Form */}
-              <form onSubmit={handleAddPost} className="flex gap-2 mb-3.5">
-                <input 
-                  type="text" 
-                  value={newPostContent}
-                  onChange={e => setNewPostContent(e.target.value)}
-                  placeholder="Share a milestone or ask a doubt..." 
-                  className="flex-grow bg-glass-overlay border border-glass-border rounded-xl px-3 py-1.5 text-xs text-on-surface focus:outline-none focus:ring-1 focus:ring-primary"
-                />
-                <button type="submit" className="bg-[#FFB300] text-[#281526] font-bold text-[10px] py-1.5 px-3.5 rounded-lg uppercase tracking-wider shrink-0">Post</button>
-              </form>
-
-              <div className="flex flex-col gap-2.5 max-h-48 overflow-y-auto pr-1 no-scrollbar">
-                {feedPosts.map(post => (
-                  <div key={post.id} className="p-3 bg-glass-overlay/10 border border-glass-border rounded-lg text-[11px] animate-fade-in">
-                    <p className="font-bold text-on-background text-[11px]">{post.author}</p>
-                    <p className="text-on-surface-variant mt-1 leading-relaxed text-[11px]">{post.content}</p>
-                    
-                    <div className="flex gap-4 mt-2 border-t border-glass-border/30 pt-1.5 text-[10px] text-on-surface-variant font-semibold">
-                      <button type="button" onClick={() => handleLikePost(post.id)} className="flex items-center gap-1 hover:text-primary">
-                        <span className="material-symbols-outlined text-xs">thumb_up</span>
-                        <span>{post.likes} Likes</span>
-                      </button>
-                      <div className="flex items-center gap-1">
-                        <span className="material-symbols-outlined text-xs">comment</span>
-                        <span>{post.comments.length} Comments</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <button onClick={() => router.push('/community')} className="text-primary font-label-sm text-[10px] uppercase font-bold text-center w-full mt-4 hover:underline">
-              View Full Community Forum →
-            </button>
-          </div>
-        </div>
-
-        {/* SOS Helpline & Emergency Panel */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-stack-lg mb-stack-lg">
-          <div className="glass-panel rounded-xl p-5 flex flex-col justify-between">
-            <div>
+          <div className="glass-panel rounded-xl p-5 flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
+            <div className="flex-1">
               <h3 className="font-body-lg text-body-lg font-semibold text-on-background mb-3 flex items-center gap-2">
                 <span className="material-symbols-outlined text-rose-500 text-base">emergency</span>
                 <span>Emergency Safety Widget</span>
               </h3>
-              <div className="grid grid-cols-2 gap-2 text-[10px] mb-3">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-[10px] mb-3">
                 <a href="tel:1091" className="bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 font-bold p-2 rounded-lg flex items-center gap-1.5 justify-center border border-rose-500/20">
                   <span className="material-symbols-outlined text-xs">phone_in_talk</span>
                   <span>Helpline (1091)</span>
@@ -1014,8 +846,16 @@ export default function Dashboard() {
                   <span className="material-symbols-outlined text-xs">phone</span>
                   <span>Police (112)</span>
                 </a>
+                <a href="tel:1800-180-5522" className="bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 font-bold p-2 rounded-lg flex items-center gap-1.5 justify-center border border-rose-500/20">
+                  <span className="material-symbols-outlined text-xs">local_hospital</span>
+                  <span>Ambulance</span>
+                </a>
+                <a href="tel:181" className="bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 font-bold p-2 rounded-lg flex items-center gap-1.5 justify-center border border-rose-500/20">
+                  <span className="material-symbols-outlined text-xs">support_agent</span>
+                  <span>Women Helpline</span>
+                </a>
               </div>
-              <div className="bg-glass-overlay/10 border border-glass-border p-3 rounded-lg flex flex-col gap-1.5 mb-2 text-[11px]">
+              <div className="bg-glass-overlay/10 border border-glass-border p-3 rounded-lg flex flex-col gap-1.5 text-[11px]">
                 <p className="font-semibold text-on-background">Trusted Contact:</p>
                 <div className="flex justify-between text-on-surface-variant">
                   <span>Ravi Roy (Husband)</span>
@@ -1023,168 +863,14 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
-            
-            <button onClick={() => router.push('/safety')} className="bg-rose-600 hover:bg-rose-700 text-white font-label-sm text-[10px] uppercase tracking-wider font-bold py-2 rounded-lg text-center transition-all shadow-[0_0_10px_rgba(225,29,72,0.2)]">
+            <button onClick={() => router.push('/safety')} className="bg-rose-600 hover:bg-rose-700 text-white font-label-sm text-[10px] uppercase tracking-wider font-bold py-3 px-8 rounded-xl text-center transition-all shadow-[0_0_16px_rgba(225,29,72,0.25)] shrink-0 flex items-center gap-2">
+              <span className="material-symbols-outlined text-sm">crisis_alert</span>
               SOS Broadcast Location
             </button>
           </div>
-
-          {/* AI Career Re-entry Planner Section */}
-          <div className="glass-panel rounded-xl p-5 flex flex-col justify-between border border-primary/20 relative overflow-hidden">
-            {/* Ambient Glow */}
-            <div className="absolute -bottom-10 -right-10 w-48 h-48 bg-primary opacity-[0.04] rounded-full blur-2xl"></div>
-            
-            <div className="z-10 relative flex-grow">
-              <h3 className="font-headline-md text-headline-md text-on-background mb-2 flex items-center gap-2">
-                <span>Career Re-entry Pathmaker</span>
-                <span className="text-primary text-xs bg-primary/15 px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold">AI Assistant</span>
-              </h3>
-              <p className="font-body-md text-body-md text-on-surface-variant mb-6 text-sm">
-                Returning to work after a break? Tell us your background and goals, and we'll map out your learning, mentorship, and financial milestones.
-              </p>
-
-              {!reentryPlan ? (
-                <form onSubmit={handleGenerateReentryPlan} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                  <div>
-                    <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-2">Previous Role</label>
-                    <input 
-                      type="text" 
-                      value={reentryPrevRole} 
-                      onChange={e => setReentryPrevRole(e.target.value)} 
-                      placeholder="e.g. Software Engineer" 
-                      className="w-full bg-glass-overlay border border-glass-border rounded-xl py-2.5 px-4 text-xs text-on-surface focus:outline-none focus:ring-1 focus:ring-primary"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-2">Break Duration</label>
-                    <select 
-                      value={reentryDuration} 
-                      onChange={e => setReentryDuration(e.target.value)}
-                      className="w-full bg-glass-overlay border border-glass-border rounded-xl py-2.5 px-4 text-xs text-on-surface focus:outline-none focus:ring-1 focus:ring-primary appearance-none"
-                      required
-                    >
-                      <option value="" disabled className="text-on-surface/50">Select duration</option>
-                      <option value="1">1 Year</option>
-                      <option value="2">2 Years</option>
-                      <option value="3">3 Years</option>
-                      <option value="5">5+ Years</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-2">Target Goal</label>
-                    <div className="flex gap-2">
-                      <input 
-                        type="text" 
-                        value={reentryTarget} 
-                        onChange={e => setReentryTarget(e.target.value)} 
-                        placeholder="e.g. Product Manager" 
-                        className="flex-1 bg-glass-overlay border border-glass-border rounded-xl py-2.5 px-4 text-xs text-on-surface focus:outline-none focus:ring-1 focus:ring-primary"
-                        required
-                      />
-                      <button 
-                        type="submit" 
-                        disabled={reentryLoading}
-                        className="bg-primary text-white font-semibold py-2.5 px-6 rounded-xl transition-all duration-300 hover:bg-opacity-95 font-label-sm text-label-sm uppercase tracking-wider shrink-0 flex items-center justify-center min-w-[120px]"
-                      >
-                        {reentryLoading ? (
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        ) : 'Generate'}
-                      </button>
-                    </div>
-                  </div>
-                </form>
-              ) : (
-                <div className="animate-fade-in">
-                  <div className="flex justify-between items-center mb-4 bg-glass-overlay/25 border border-glass-border rounded-xl p-3">
-                    <div>
-                      <span className="text-[10px] text-on-surface-variant uppercase tracking-widest">Your Profile</span>
-                      <h4 className="font-body-lg text-body-lg text-on-background font-medium text-sm">
-                        {reentryPrevRole} ➔ {reentryTarget} ({reentryPlan.breakDuration} break)
-                      </h4>
-                    </div>
-                    <button 
-                      onClick={() => {
-                        setReentryPlan(null);
-                        setReentryPrevRole('');
-                        setReentryDuration('');
-                        setReentryTarget('');
-                      }}
-                      className="text-primary hover:underline font-label-sm text-xs uppercase font-semibold"
-                    >
-                      Reset
-                    </button>
-                  </div>
-
-                  {/* Timeline Roadmap */}
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-2 relative">
-                    {reentryPlan.plan.steps.map((step, idx) => (
-                      <div key={idx} className="glass-panel p-3 rounded-xl relative flex flex-col justify-between hover:shadow-lg transition-all duration-300">
-                        <div>
-                          <span className="text-[9px] text-primary font-bold uppercase tracking-wider block mb-1">{step.phase}</span>
-                          <p className="text-[10px] text-on-surface-variant mb-1.5 leading-relaxed">{step.description}</p>
-                          <ul className="text-[9px] text-on-surface list-disc pl-3 space-y-0.5 font-medium leading-relaxed">
-                            {step.items.map((item, i) => (
-                              <li key={i}>{item}</li>
-                            ))}
-                          </ul>
-                        </div>
-                        {idx === 0 && (
-                          <button 
-                            onClick={() => {
-                              setModule3Progress(100);
-                              fetch(`${BACKEND_URL}/api/learning/progress/${CURRENT_USER_ID}`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ courseId: 'module3', progress: 100 }),
-                              }).catch(console.error);
-                              alert("Skills Patched! Basics of Mutual Funds progress updated to 100%.");
-                            }}
-                            className="mt-3 w-full bg-[#FFB300] hover:bg-opacity-95 text-[#281526] py-1 rounded-lg font-label-sm text-[9px] uppercase tracking-wider font-bold text-center"
-                          >
-                            Enlist
-                          </button>
-                        )}
-                        {idx === 1 && (
-                          <button 
-                            onClick={() => handleConnectMentor('Priya Sharma')}
-                            disabled={connectedMentors.includes('Priya Sharma')}
-                            className="mt-3 w-full bg-[#FFB300] hover:bg-opacity-95 text-[#281526] py-1 rounded-lg font-label-sm text-[9px] uppercase tracking-wider font-bold text-center disabled:bg-glass-overlay/10 disabled:text-on-surface-variant disabled:opacity-50"
-                          >
-                            {connectedMentors.includes('Priya Sharma') ? 'Connected' : 'Match'}
-                          </button>
-                        )}
-                        {idx === 2 && (
-                          <button 
-                            onClick={() => {
-                              const bufferVal = reentryPlan.breakDuration.includes('3') || reentryPlan.breakDuration.includes('5') ? 25000 : 15000;
-                              fetch(`${BACKEND_URL}/api/savings/${CURRENT_USER_ID}`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ amount: bufferVal }),
-                              })
-                                .then(res => res.json())
-                                .then(data => {
-                                  if (data.success) {
-                                    setSavings(data.balance);
-                                    alert(`Successfully added ₹${bufferVal.toLocaleString()} cushion to your Emergency Fund!`);
-                                  }
-                                });
-                            }}
-                            className="mt-3 w-full bg-[#FFB300] hover:bg-opacity-95 text-[#281526] py-1 rounded-lg font-label-sm text-[9px] uppercase tracking-wider font-bold text-center"
-                          >
-                            Fund Buffer
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
         </div>
-        
+
+
         {/* Success Stories Carousel Header */}
         <div className="mt-stack-xl mb-stack-md flex justify-between items-end">
           <h3 className="font-headline-md text-headline-md text-on-background">Success Stories</h3>
