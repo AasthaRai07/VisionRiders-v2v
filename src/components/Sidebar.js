@@ -4,11 +4,11 @@ export default function Sidebar({ activeItem = 'home' }) {
   const navItems = [
     { name: 'Home', icon: 'home', href: '/dashboard', id: 'home' },
     { name: 'Learn', icon: 'school', href: '/learning', id: 'learn' },
-    { name: 'Finance', icon: 'payments', href: '#', id: 'finance' },
+    { name: 'Finance', icon: 'payments', href: '/finance', id: 'finance' },
     { name: 'Mentors', icon: 'diversity_3', href: '/mentorship', id: 'mentors' },
-    { name: 'Jobs', icon: 'work', href: '#', id: 'jobs' },
-    { name: 'Community', icon: 'groups', href: '#', id: 'community' },
-    { name: 'Profile', icon: 'person', href: '#', id: 'profile' },
+    { name: 'Jobs', icon: 'work', href: '/jobs', id: 'jobs' },
+    { name: 'Community', icon: 'groups', href: '/community', id: 'community' },
+    { name: 'Profile', icon: 'person', href: '/profile', id: 'profile' },
   ];
 
   return (
