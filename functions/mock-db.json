@@ -1546,5 +1546,100 @@
       "proficiency": "Intermediate"
     }
   },
-  "applications": {}
+  "applications": {},
+  "finance_profiles": {
+    "demo-user-123": {
+      "userId": "demo-user-123",
+      "monthlyIncome": 35000,
+      "emergencyFundBalance": 65400,
+      "emergencyFundTarget": 100000,
+      "monthlySavingsRate": 20,
+      "finherScore": 75,
+      "savingsConsistency": 85,
+      "investmentReadiness": 78,
+      "netWorth": 120400,
+      "upcomingBills": [
+        {
+          "id": "b1",
+          "name": "LIC Insurance Premium",
+          "amount": 3200,
+          "dueDate": "2026-07-15",
+          "status": "Pending"
+        },
+        {
+          "id": "b2",
+          "name": "Broadband/WiFi Bill",
+          "amount": 899,
+          "dueDate": "2026-07-20",
+          "status": "Pending"
+        }
+      ],
+      "spendingTrends": [
+        {
+          "month": "Jan",
+          "savings": 4500,
+          "expenses": 18000,
+          "investments": 2000
+        },
+        {
+          "month": "Feb",
+          "savings": 5000,
+          "expenses": 17500,
+          "investments": 2500
+        },
+        {
+          "month": "Mar",
+          "savings": 6000,
+          "expenses": 16000,
+          "investments": 3000
+        },
+        {
+          "month": "Apr",
+          "savings": 5200,
+          "expenses": 19000,
+          "investments": 3200
+        },
+        {
+          "month": "May",
+          "savings": 6500,
+          "expenses": 15500,
+          "investments": 4000
+        },
+        {
+          "month": "Jun",
+          "savings": 7200,
+          "expenses": 15000,
+          "investments": 5000
+        }
+      ],
+      "expenseBreakdown": [
+        {
+          "name": "Rent",
+          "value": 12000,
+          "color": "#C2185B"
+        },
+        {
+          "name": "Food/Groceries",
+          "value": 6500,
+          "color": "#E91E63"
+        },
+        {
+          "name": "Travel",
+          "value": 2500,
+          "color": "#FFB300"
+        },
+        {
+          "name": "Bills & Utilities",
+          "value": 4100,
+          "color": "#9C27B0"
+        },
+        {
+          "name": "Shopping & Leisure",
+          "value": 4900,
+          "color": "#00BCD4"
+        }
+      ],
+      "updatedAt": "2026-07-10T21:47:55.185Z"
+    }
+  }
 }

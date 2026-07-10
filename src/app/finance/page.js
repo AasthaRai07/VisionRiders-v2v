@@ -23,10 +23,70 @@ export default function FinanceHub() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState(null);
+
+  // Comeback Timeline and PS Pillars states
+  const [selectedMilestone, setSelectedMilestone] = useState({ id: 'm6', label: 'Today', date: 'Jul 2026', icon: 'workspace_premium', desc: 'FinHer score reaches 75. Reskilling verified, profile ready for hiring!' });
+  const [milestones] = useState([
+    { id: 'm1', label: 'Break Started', date: 'Oct 2024', icon: 'pause_circle', desc: 'Took a break from software engineering to focus on maternity & infant care.' },
+    { id: 'm2', label: 'Reskilling Booted', date: 'Mar 2025', icon: 'menu_book', desc: 'Completed Advanced Excel & Financial Foundations courses.' },
+    { id: 'm3', label: 'Mentor Matched', date: 'Sep 2025', icon: 'handshake', desc: 'Restart plan aligned with VP Mentor Priya Sharma.' },
+    { id: 'm4', label: 'Scheme Applied', date: 'Jan 2026', icon: 'account_balance', desc: 'Applied for sovereign Stand-Up India entrepreneurship grant.' },
+    { id: 'm5', label: 'Interview Practice', date: 'Jun 2026', icon: 'forum', desc: 'Cleared mock finance interview with HerNova AI Coach.' },
+    { id: 'm6', label: 'Today', date: 'Jul 2026', icon: 'workspace_premium', desc: 'FinHer score reaches 75. Reskilling verified, profile ready for hiring!' }
+  ]);
+  const [pillars] = useState([
+    { name: 'Learning Progress', value: '80%', icon: 'school', color: 'border-[#C2185B]/30 text-[#C2185B]' },
+    { name: 'Mentorship Syncs', value: '3 completed', icon: 'handshake', color: 'border-[#7B1FA2]/30 text-[#7B1FA2]' },
+    { name: 'Financial Health', value: '75 FinHer', icon: 'payments', color: 'border-[#FFB300]/30 text-[#FFB300]' },
+    { name: 'Community Wins', value: 'Active', icon: 'groups', color: 'border-[#00BCD4]/30 text-[#00BCD4]' }
+  ]);
   
   // Dashboard & Goals states
   const [goals, setGoals] = useState([]);
-  const [newGoal, setNewGoal] = useState({ title: 'Higher Education', targetAmount: 200000, deadline: '2028-12-31', currentSavings: 15000, monthlyContribution: 5000 });
+  const [goalTemplates] = useState([
+    {
+      id: 'template_emergency',
+      title: 'Rebuild Emergency Fund after a Break',
+      targetAmount: 100000,
+      months: 12,
+      category: 'financial inclusion',
+      whyCopy: 'Having a secure emergency buffer is the foundational step for return-to-work confidence to absorb sudden transit or initial care costs.'
+    },
+    {
+      id: 'template_upskilling',
+      title: 'Save for Upskilling & Certification',
+      targetAmount: 25000,
+      months: 6,
+      category: 'education',
+      whyCopy: 'Academic reviews show targeted technical upskilling cuts wage penalty gaps by up to 22%.'
+    },
+    {
+      id: 'template_business',
+      title: 'Start a Small Business',
+      targetAmount: 300000,
+      months: 24,
+      category: 'entrepreneurship',
+      whyCopy: 'MSME Ministry indicators highlight a 68% credit gap for female business owners in India; starting a personal seed corpus unlocks matching Mudra Yojana schemes.'
+    },
+    {
+      id: 'template_wardrobe',
+      title: 'Return-to-Work Wardrobe & Transit Fund',
+      targetAmount: 15000,
+      months: 3,
+      category: 'employment',
+      whyCopy: 'Building a personal return-to-work transit and presentation allowance removes immediate out-of-pocket cash flow barriers.'
+    },
+    {
+      id: 'template_custom',
+      title: 'Custom Financial Goal',
+      targetAmount: 50000,
+      months: 10,
+      category: 'financial inclusion',
+      whyCopy: 'Set a custom milestone target to fund your financial security objectives.'
+    }
+  ]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState('template_emergency');
+  const [newGoal, setNewGoal] = useState({ title: 'Rebuild Emergency Fund after a Break', targetAmount: 100000, deadline: '2027-07-10', currentSavings: 0, monthlyContribution: 8333, category: 'financial inclusion' });
   const [goalModalOpen, setGoalModalOpen] = useState(false);
   const [selectedGoalForContribution, setSelectedGoalForContribution] = useState(null);
   const [contributionAmount, setContributionAmount] = useState(5000);
@@ -179,6 +239,27 @@ export default function FinanceHub() {
       const data = await res.json();
       if (data.badges) setBadges(data.badges);
     } catch (_) {}
+  };
+
+  const handleTemplateChange = (templateId) => {
+    setSelectedTemplateId(templateId);
+    const template = goalTemplates.find(t => t.id === templateId);
+    if (!template) return;
+
+    const date = new Date();
+    date.setMonth(date.getMonth() + template.months);
+    const deadlineString = date.toISOString().split('T')[0];
+
+    const contribution = Math.ceil(template.targetAmount / template.months);
+
+    setNewGoal({
+      title: template.title,
+      targetAmount: template.targetAmount,
+      currentSavings: 0,
+      monthlyContribution: contribution,
+      deadline: deadlineString,
+      category: template.category
+    });
   };
 
   // Add a new Goal
@@ -545,12 +626,8 @@ export default function FinanceHub() {
         <div className="flex border-b border-glass-border mb-4 gap-6 text-sm font-semibold overflow-x-auto whitespace-nowrap pb-2">
           {[
             { id: 'dashboard', name: 'Dashboard 📊' },
-            { id: 'copilot', name: 'AI Financial Copilot 🤖' },
             { id: 'goals', name: 'Goal Planner 🎯' },
-            { id: 'simulator', name: 'SIP & Virtual Trading 📈' },
-            { id: 'schemes', name: 'Govt. Schemes Finder 🏛️' },
-            { id: 'learning', name: 'Learning Hub 🎓' },
-            { id: 'safety', name: 'Safety & Emergency Support 🛡️' }
+            { id: 'schemes', name: 'Govt. Schemes Finder 🏛️' }
           ].map(t => (
             <button 
               key={t.id}
@@ -613,6 +690,112 @@ export default function FinanceHub() {
                 <span className="text-[10px] text-on-surface-variant font-medium mt-1">Advanced Profile Tier</span>
               </div>
 
+             </div>
+
+            {/* PILLARS STRIP & THIS WEEK'S FOCUS NUDGE */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+              
+              {/* Pillars Strip */}
+              <div className="lg:col-span-3 glass-panel p-6 rounded-2xl flex flex-col border border-glass-border bg-white/40">
+                <h3 className="font-bold text-xs uppercase tracking-wider text-on-surface-variant mb-4">Your Comeback Status (Program Pillars)</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {pillars.map((p, idx) => (
+                    <div key={idx} className={`p-4 rounded-xl border bg-white/20 flex flex-col gap-2 transition-all hover:scale-[1.02] ${p.color}`}>
+                      <div className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-lg">{p.icon}</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">{p.name.split(' ')[0]}</span>
+                      </div>
+                      <p className="text-sm font-extrabold text-on-surface mt-1">{p.value}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Lag-aware Suggestion Nudge */}
+              <div className="lg:col-span-1 glass-panel p-6 rounded-2xl flex flex-col border border-glass-border bg-gradient-to-br from-[#7B1FA2]/10 to-transparent">
+                <h3 className="font-bold text-xs uppercase tracking-wider text-[#7B1FA2] flex items-center gap-1.5 mb-2">
+                  <span className="material-symbols-outlined text-sm">tips_and_updates</span>
+                  This Week's Focus
+                </h3>
+                <p className="text-xs font-semibold text-on-surface leading-relaxed flex-grow">
+                  "You have completed **80% of reskilling courses** but haven't checked in with the Returnship Circle this week. Share your savings win to inspire others!"
+                </p>
+                <button 
+                  onClick={() => setActiveTab('learning')}
+                  className="font-bold text-[10px] text-primary uppercase hover:underline mt-3 text-left flex items-center gap-1"
+                >
+                  View Learning Circle <span className="material-symbols-outlined text-xs">arrow_forward</span>
+                </button>
+              </div>
+
+            </div>
+
+            {/* YOUR COMEBACK TIMELINE WIDGET */}
+            <div className="glass-panel p-6 rounded-2xl flex flex-col border border-glass-border bg-white/40 relative overflow-hidden">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h3 className="font-bold text-base text-on-surface flex items-center gap-2">
+                    <span className="material-symbols-outlined text-primary">timeline</span>
+                    Your Comeback Timeline
+                  </h3>
+                  <p className="text-xs text-on-surface-variant mt-1 font-medium">Tracking milestones since break start (2-year software engineering pause)</p>
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] bg-success-emerald/20 text-success-emerald px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wide">
+                    Comeback Ready
+                  </span>
+                </div>
+              </div>
+
+              {/* Horizontal Timeline Trail */}
+              <div className="relative w-full flex items-center justify-between py-8 px-4 border-t border-b border-glass-border/30 bg-white/10 rounded-xl overflow-x-auto min-h-[140px]">
+                {/* Horizontal Line connecting nodes */}
+                <div className="absolute left-10 right-10 top-[60px] h-[3px] bg-glass-border/60 z-0"></div>
+                {/* Colored progress path */}
+                <div className="absolute left-10 w-[80%] top-[60px] h-[3px] bg-gradient-to-r from-primary to-success-emerald z-0"></div>
+
+                {milestones.map((m, idx) => {
+                  const isActive = selectedMilestone?.id === m.id;
+                  return (
+                    <div 
+                      key={m.id} 
+                      onClick={() => setSelectedMilestone(m)}
+                      className="relative z-10 flex flex-col items-center cursor-pointer group px-2 select-none"
+                    >
+                      {/* Milestone Date (Top) */}
+                      <span className="text-[9px] font-bold text-on-surface-variant uppercase tracking-wider mb-2 group-hover:text-primary transition-colors">
+                        {m.date}
+                      </span>
+                      {/* Node circle */}
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all ${isActive ? 'bg-[#C2185B] border-white text-white shadow-[0_0_12px_rgba(194,24,91,0.5)] scale-110' : 'bg-white/80 border-glass-border text-on-surface-variant hover:border-primary hover:scale-105'}`}>
+                        <span className="material-symbols-outlined text-sm">{m.icon}</span>
+                      </div>
+                      {/* Milestone Label (Bottom) */}
+                      <span className={`text-[10px] font-bold mt-2 text-center group-hover:text-primary transition-colors whitespace-nowrap ${isActive ? 'text-[#C2185B]' : 'text-on-surface-variant'}`}>
+                        {m.label}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Selected Milestone Detail Popover Card */}
+              {selectedMilestone && (
+                <div className="mt-4 p-4 rounded-xl border border-primary/20 bg-primary/5 flex items-start gap-3 animate-fade-slide-up">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary mt-0.5">
+                    <span className="material-symbols-outlined text-lg">{selectedMilestone.icon}</span>
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-xs text-on-surface uppercase tracking-wider flex items-center gap-2">
+                      {selectedMilestone.label}
+                      <span className="text-[9px] bg-white/40 border border-glass-border px-1.5 py-0.5 rounded text-on-surface-variant font-bold">{selectedMilestone.date}</span>
+                    </h4>
+                    <p className="text-xs font-semibold text-on-surface-variant mt-1.5 leading-relaxed">
+                      {selectedMilestone.desc}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Charts and trends */}
@@ -733,165 +916,7 @@ export default function FinanceHub() {
           </div>
         )}
 
-        {/* 2. AI FINANCIAL COPILOT TAB */}
-        {activeTab === 'copilot' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-slide-up">
-            
-            {/* Copilot Chat pane */}
-            <div className="lg:col-span-2 glass-panel rounded-2xl flex flex-col h-[580px] overflow-hidden border border-glass-border shadow-lg">
-              
-              {/* Header */}
-              <div className="p-4 border-b border-glass-border flex justify-between items-center bg-white/5">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center">
-                    <span className="material-symbols-outlined text-primary">smart_toy</span>
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-sm text-on-surface">Nova AI Copilot</h3>
-                    <p className="text-[10px] text-success-emerald font-semibold">Live Finance Advisor</p>
-                  </div>
-                </div>
-                <button 
-                  onClick={handleDownloadReport}
-                  className="font-bold text-xs bg-primary text-white hover:bg-primary-container px-3.5 py-1.5 rounded-full shadow-sm flex items-center gap-1 transition-all"
-                >
-                  <span className="material-symbols-outlined text-sm">download</span> Download PDF Report
-                </button>
-              </div>
 
-              {/* Chat messages */}
-              <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
-                {copilotMessages.map(m => (
-                  <div key={m.id} className={`flex gap-3 max-w-[85%] ${m.sender === 'user' ? 'self-end flex-row-reverse' : ''}`}>
-                    <div className={`p-3.5 rounded-2xl text-xs leading-relaxed ${m.sender === 'user' ? 'bg-[#C2185B] text-white rounded-tr-none' : 'bg-white/30 border border-glass-border text-on-surface rounded-tl-none'}`}>
-                      {m.text}
-                    </div>
-                  </div>
-                ))}
-                {copilotTyping && (
-                  <div className="flex gap-3 max-w-[85%]">
-                    <div className="p-3 rounded-2xl bg-white/30 border border-glass-border text-xs flex items-center gap-1 font-semibold text-primary">
-                      <span className="w-1.5 h-1.5 bg-[#C2185B] rounded-full animate-bounce"></span>
-                      <span className="w-1.5 h-1.5 bg-[#C2185B] rounded-full animate-bounce [animation-delay:0.2s]"></span>
-                      <span className="w-1.5 h-1.5 bg-[#C2185B] rounded-full animate-bounce [animation-delay:0.4s]"></span>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Inputs */}
-              <div className="p-3 border-t border-glass-border bg-white/5 flex gap-2">
-                <input 
-                  type="text" 
-                  value={copilotInput}
-                  onChange={(e) => setCopilotInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSendCopilot()}
-                  placeholder="Ask Nova about emergency funds, budget planning, or SIPs..."
-                  className="flex-1 bg-white/20 border border-glass-border rounded-xl px-4 text-xs text-on-surface focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-on-surface-variant/60"
-                />
-                <button 
-                  onClick={handleSendCopilot}
-                  className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center hover:opacity-90 active:scale-95 transition-all"
-                >
-                  <span className="material-symbols-outlined text-sm">send</span>
-                </button>
-              </div>
-
-            </div>
-
-            {/* Smart Expense Statement Analyzer */}
-            <div className="lg:col-span-1 flex flex-col gap-6">
-              
-              <div className="glass-panel p-6 rounded-2xl flex flex-col">
-                <h3 className="font-bold text-sm text-on-surface flex items-center gap-2 mb-3">
-                  <span className="material-symbols-outlined text-primary">upload_file</span>
-                  Smart Expense Analyzer
-                </h3>
-                <p className="text-xs text-on-surface-variant leading-relaxed mb-4">
-                  Paste bank statement logs or copy-paste CSV statements to auto-categorize.
-                </p>
-
-                <textarea 
-                  value={statementText}
-                  onChange={(e) => setStatementText(e.target.value)}
-                  placeholder="Paste bank transaction rows here..." 
-                  rows={6}
-                  className="w-full bg-white/20 border border-glass-border rounded-xl p-3 text-xs text-on-surface focus:outline-none focus:ring-1 focus:ring-primary mb-4"
-                />
-
-                <button 
-                  onClick={handleParseStatement}
-                  disabled={parsing}
-                  className="w-full font-bold text-xs bg-primary text-white py-3 rounded-xl hover:opacity-95 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
-                >
-                  {parsing ? (
-                    <span className="material-symbols-outlined text-sm animate-spin">rotate_right</span>
-                  ) : (
-                    <span className="material-symbols-outlined text-sm">rocket_launch</span>
-                  )}
-                  Analyze &amp; Categorize
-                </button>
-
-                {parseResults && (
-                  <div className="mt-4 border-t border-glass-border pt-4">
-                    <h4 className="font-bold text-xs text-on-surface mb-2">Categorized Records:</h4>
-                    <div className="flex flex-col gap-2 max-h-[160px] overflow-y-auto">
-                      {parseResults.map((r, idx) => (
-                        <div key={idx} className="p-2 rounded-lg bg-white/10 flex justify-between items-center text-[10px]">
-                          <div>
-                            <span className="font-bold">{r.title}</span>
-                            <span className="text-[8px] bg-primary/20 text-[#C2185B] px-1.5 py-0.5 rounded-full ml-2 uppercase font-extrabold">{r.category}</span>
-                          </div>
-                          <span className="font-bold text-[#C2185B]">₹{r.amount}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Add Manual Expense */}
-              <div className="glass-panel p-6 rounded-2xl flex flex-col">
-                <h4 className="font-bold text-xs text-on-surface mb-3">Add Manual Transaction</h4>
-                <div className="flex flex-col gap-3">
-                  <input 
-                    type="text" 
-                    placeholder="Expense name"
-                    value={newExpense.title}
-                    onChange={(e) => setNewExpense({ ...newExpense, title: e.target.value })}
-                    className="w-full bg-white/20 border border-glass-border rounded-lg px-3 py-2 text-xs text-on-surface"
-                  />
-                  <input 
-                    type="number" 
-                    placeholder="Amount (₹)"
-                    value={newExpense.amount}
-                    onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
-                    className="w-full bg-white/20 border border-glass-border rounded-lg px-3 py-2 text-xs text-on-surface"
-                  />
-                  <select 
-                    value={newExpense.category}
-                    onChange={(e) => setNewExpense({ ...newExpense, category: e.target.value })}
-                    className="w-full bg-white/20 border border-glass-border rounded-lg px-3 py-2 text-xs text-on-surface text-on-surface-variant font-semibold"
-                  >
-                    <option value="Food">Food</option>
-                    <option value="Rent">Rent</option>
-                    <option value="Shopping">Shopping</option>
-                    <option value="Bills">Bills</option>
-                    <option value="Travel">Travel</option>
-                  </select>
-                  <button 
-                    onClick={handleAddExpense}
-                    className="w-full font-bold text-xs bg-[#FFB300] text-[#320047] py-2.5 rounded-lg hover:opacity-90 transition-all"
-                  >
-                    Add Expense
-                  </button>
-                </div>
-              </div>
-
-            </div>
-
-          </div>
-        )}
 
         {/* 3. GOAL PLANNER TAB */}
         {activeTab === 'goals' && (
@@ -912,6 +937,24 @@ export default function FinanceHub() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {goals.map(g => {
                 const percent = Math.min(100, Math.round((g.currentSavings / g.targetAmount) * 100));
+                
+                // Calculate projected completion date based on monthly contribution rate (Requirement 4)
+                const gap = Math.max(0, g.targetAmount - g.currentSavings);
+                const remainingMonths = g.monthlyContribution > 0 ? Math.ceil(gap / g.monthlyContribution) : 999;
+                
+                const getProjectedDateString = (mLeft) => {
+                  if (mLeft === 999) return 'Paused / Unspecified';
+                  const d = new Date();
+                  d.setMonth(d.getMonth() + mLeft);
+                  return d.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+                };
+
+                const projDate = getProjectedDateString(remainingMonths);
+
+                // Check for matched central/state schemes from OGD cache list (Requirement 3)
+                const goalCategory = g.category || (g.title.toLowerCase().includes('business') ? 'entrepreneurship' : g.title.toLowerCase().includes('upskilling') ? 'education' : g.title.toLowerCase().includes('emergency') ? 'financial inclusion' : 'financial inclusion');
+                const matchedSchemes = allSchemes.filter(s => s.category === goalCategory);
+
                 return (
                   <div key={g.id} className="glass-panel p-6 rounded-2xl flex flex-col border border-glass-border relative">
                     <div className="flex justify-between items-start">
@@ -923,19 +966,38 @@ export default function FinanceHub() {
                         <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${g.probability === 'High' ? 'bg-success-emerald/20 text-success-emerald' : g.probability === 'Medium' ? 'bg-[#FFB300]/20 text-[#FFB300]' : 'bg-error/20 text-error'}`}>
                           {g.probability} Probability
                         </span>
-                        <p className="text-[10px] text-on-surface-variant mt-1.5">Completes: **{g.estCompletionDate}**</p>
+                        <p className="text-[10px] text-on-surface-variant mt-1.5">Projected: **{projDate}**</p>
                       </div>
                     </div>
 
-                    {/* Progress bar */}
-                    <div className="w-full bg-surface-variant h-3 rounded-full overflow-hidden mt-6 relative">
-                      <div className="h-full bg-primary" style={{ width: `${percent}%` }}></div>
+                    {/* Progress bar (Amber-to-Emerald Gradient) */}
+                    <div className="w-full bg-surface-variant h-3.5 rounded-full overflow-hidden mt-6 relative border border-glass-border">
+                      <div className="h-full bg-gradient-to-r from-[#FFB300] to-success-emerald" style={{ width: `${percent}%` }}></div>
                     </div>
                     
                     <div className="flex justify-between items-center mt-3 text-[11px] font-bold text-on-surface-variant">
                       <span>₹{g.currentSavings} saved</span>
                       <span>{percent}%</span>
                     </div>
+
+                    {/* Inline Scheme Matching Recommendation Card */}
+                    {matchedSchemes.length > 0 && (
+                      <div className="mt-4 p-3 rounded-xl bg-[#FFB300]/5 border border-[#FFB300]/25 flex items-center justify-between text-[11px] animate-fade-slide-up">
+                        <span className="font-semibold text-on-surface-variant flex items-center gap-1.5">
+                          <span className="material-symbols-outlined text-sm text-[#FFB300]">wb_incandescent</span>
+                          {matchedSchemes.length} matching welfare schemes found!
+                        </span>
+                        <button 
+                          onClick={() => {
+                            setSelectedCategory(goalCategory);
+                            setActiveTab('schemes');
+                          }}
+                          className="font-bold text-[#C2185B] hover:underline"
+                        >
+                          View Details
+                        </button>
+                      </div>
+                    )}
 
                     <div className="flex justify-between items-center mt-6 pt-4 border-t border-glass-border gap-4">
                       <button 
@@ -956,20 +1018,44 @@ export default function FinanceHub() {
               })}
             </div>
 
-            {/* Add Goal Modal */}
+            {/* Add Goal Modal with Templates (Requirement 1-2) */}
             {goalModalOpen && (
               <div className="fixed inset-0 z-[100] flex items-center justify-center">
                 <div className="absolute inset-0 bg-surface/40 backdrop-blur-sm" onClick={() => setGoalModalOpen(false)}></div>
-                <div className="relative w-full max-w-md mx-4 glass-panel rounded-2xl p-6 border border-glass-border shadow-2xl">
+                <div className="relative w-full max-w-md mx-4 glass-panel rounded-2xl p-6 border border-glass-border shadow-2xl overflow-y-auto max-h-[90vh]">
                   <h3 className="font-bold text-base text-primary mb-4">Create Financial Goal</h3>
+                  
                   <div className="flex flex-col gap-4">
+                    
+                    {/* Pre-built Goal Templates */}
+                    <div>
+                      <label className="block text-[10px] text-on-surface-variant font-bold uppercase ml-1 mb-2">Select Goal Template</label>
+                      <select 
+                        value={selectedTemplateId}
+                        onChange={(e) => handleTemplateChange(e.target.value)}
+                        className="w-full bg-white/20 border border-glass-border rounded-xl px-4 py-2.5 text-xs text-on-surface font-semibold focus:outline-none focus:ring-1 focus:ring-primary"
+                      >
+                        {goalTemplates.map(t => (
+                          <option key={t.id} value={t.id}>{t.title}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* "Why this matters" quote block */}
+                    {goalTemplates.find(t => t.id === selectedTemplateId) && (
+                      <div className="p-3 rounded-xl bg-primary/5 border border-primary/10 text-[11px] leading-relaxed text-on-surface-variant italic font-medium">
+                        <strong>Why this matters:</strong> "{goalTemplates.find(t => t.id === selectedTemplateId).whyCopy}"
+                      </div>
+                    )}
+
                     <div>
                       <label className="block text-[10px] text-on-surface-variant font-bold uppercase ml-1 mb-1">Goal Name</label>
                       <input 
                         type="text" 
                         value={newGoal.title}
                         onChange={(e) => setNewGoal({ ...newGoal, title: e.target.value })}
-                        className="w-full bg-white/20 border border-glass-border rounded-xl px-4 py-2 text-xs text-on-surface"
+                        disabled={selectedTemplateId !== 'template_custom'}
+                        className="w-full bg-white/20 border border-glass-border rounded-xl px-4 py-2.5 text-xs text-on-surface disabled:opacity-75"
                       />
                     </div>
                     <div>
@@ -978,7 +1064,8 @@ export default function FinanceHub() {
                         type="number" 
                         value={newGoal.targetAmount}
                         onChange={(e) => setNewGoal({ ...newGoal, targetAmount: Number(e.target.value) })}
-                        className="w-full bg-white/20 border border-glass-border rounded-xl px-4 py-2 text-xs text-on-surface"
+                        disabled={selectedTemplateId !== 'template_custom'}
+                        className="w-full bg-white/20 border border-glass-border rounded-xl px-4 py-2.5 text-xs text-on-surface disabled:opacity-75"
                       />
                     </div>
                     <div>
@@ -987,7 +1074,7 @@ export default function FinanceHub() {
                         type="number" 
                         value={newGoal.monthlyContribution}
                         onChange={(e) => setNewGoal({ ...newGoal, monthlyContribution: Number(e.target.value) })}
-                        className="w-full bg-white/20 border border-glass-border rounded-xl px-4 py-2 text-xs text-on-surface"
+                        className="w-full bg-white/20 border border-glass-border rounded-xl px-4 py-2.5 text-xs text-on-surface"
                       />
                     </div>
                     <div>
@@ -996,12 +1083,13 @@ export default function FinanceHub() {
                         type="date" 
                         value={newGoal.deadline}
                         onChange={(e) => setNewGoal({ ...newGoal, deadline: e.target.value })}
-                        className="w-full bg-white/20 border border-glass-border rounded-xl px-4 py-2 text-xs text-on-surface"
+                        className="w-full bg-white/20 border border-glass-border rounded-xl px-4 py-2.5 text-xs text-on-surface"
                       />
                     </div>
+
                     <button 
                       onClick={handleSaveGoal}
-                      className="w-full font-bold text-xs bg-primary text-white py-3 rounded-xl hover:opacity-90 mt-2"
+                      className="w-full font-bold text-xs bg-primary text-white py-3 rounded-xl hover:opacity-90 mt-2 transition-all font-bold"
                     >
                       Save Goal
                     </button>
@@ -1040,193 +1128,7 @@ export default function FinanceHub() {
           </div>
         )}
 
-        {/* 4. INVESTMENT SIMULATOR & PORTFOLIO */}
-        {activeTab === 'simulator' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-slide-up">
-            
-            {/* Interactive SIP Sliders */}
-            <div className="lg:col-span-2 flex flex-col gap-6">
-              
-              <div className="glass-panel p-6 rounded-2xl flex flex-col border border-glass-border">
-                <h3 className="font-bold text-base text-on-surface mb-6 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[#FFB300]">sliders</span>
-                  SIP Compound Wealth Simulator
-                </h3>
 
-                <div className="space-y-6">
-                  {/* Monthly Investment Slider */}
-                  <div>
-                    <div className="flex justify-between text-xs font-semibold text-on-surface mb-2">
-                      <span>Monthly SIP Amount</span>
-                      <span className="text-[#C2185B] font-extrabold">₹{sipAmount.toLocaleString('en-IN')}</span>
-                    </div>
-                    <input 
-                      type="range" 
-                      min="500" 
-                      max="100000" 
-                      step="500" 
-                      value={sipAmount} 
-                      onChange={(e) => setSipAmount(Number(e.target.value))}
-                      className="w-full accent-primary bg-white/10 h-1.5 rounded-full"
-                    />
-                  </div>
-
-                  {/* Rate of Return Slider */}
-                  <div>
-                    <div className="flex justify-between text-xs font-semibold text-on-surface mb-2">
-                      <span>Expected Annual Rate of Return</span>
-                      <span className="text-[#C2185B] font-extrabold">{sipRate}%</span>
-                    </div>
-                    <input 
-                      type="range" 
-                      min="5" 
-                      max="30" 
-                      step="0.5" 
-                      value={sipRate} 
-                      onChange={(e) => setSipRate(Number(e.target.value))}
-                      className="w-full accent-primary bg-white/10 h-1.5 rounded-full"
-                    />
-                  </div>
-
-                  {/* Time Horizon Slider */}
-                  <div>
-                    <div className="flex justify-between text-xs font-semibold text-on-surface mb-2">
-                      <span>Duration (Years)</span>
-                      <span className="text-[#C2185B] font-extrabold">{sipYears} Years</span>
-                    </div>
-                    <input 
-                      type="range" 
-                      min="1" 
-                      max="40" 
-                      step="1" 
-                      value={sipYears} 
-                      onChange={(e) => setSipYears(Number(e.target.value))}
-                      className="w-full accent-primary bg-white/10 h-1.5 rounded-full"
-                    />
-                  </div>
-                </div>
-
-                {/* Return Summary Metrics */}
-                <div className="grid grid-cols-3 gap-4 border-t border-glass-border mt-8 pt-6 text-center">
-                  <div>
-                    <p className="text-[10px] text-on-surface-variant font-bold uppercase">Total Invested</p>
-                    <p className="text-base font-extrabold text-on-surface mt-1">₹{totalInvested.toLocaleString('en-IN')}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-on-surface-variant font-bold uppercase">Estimated Returns</p>
-                    <p className="text-base font-extrabold text-success-emerald mt-1">₹{returns.toLocaleString('en-IN')}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-on-surface-variant font-bold uppercase">Expected Wealth</p>
-                    <p className="text-base font-extrabold text-primary mt-1">₹{expectedWealth.toLocaleString('en-IN')}</p>
-                  </div>
-                </div>
-
-                {/* Simulator Graph */}
-                <div className="w-full h-[220px] mt-8">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={chartData}>
-                      <XAxis dataKey="year" stroke="rgba(0,0,0,0.4)" fontSize={10}/>
-                      <YAxis stroke="rgba(0,0,0,0.4)" fontSize={10}/>
-                      <Tooltip formatter={(value) => `₹${value.toLocaleString('en-IN')}`} />
-                      <Line type="monotone" dataKey="invested" stroke="#FFB300" strokeWidth={2} dot={false} name="Invested Capital"/>
-                      <Line type="monotone" dataKey="wealth" stroke="#C2185B" strokeWidth={3} dot={false} name="Wealth Growth"/>
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-
-            </div>
-
-            {/* Virtual Portfolio */}
-            <div className="lg:col-span-1 flex flex-col gap-6">
-              
-              <div className="glass-panel p-6 rounded-2xl flex flex-col border border-glass-border">
-                <h3 className="font-bold text-sm text-on-surface flex items-center gap-2 mb-3">
-                  <span className="material-symbols-outlined text-primary">toll</span>
-                  Virtual Demo Portfolio
-                </h3>
-                
-                {/* Available Balance */}
-                <div className="p-4 rounded-xl bg-primary/10 border border-primary/20 text-center mb-4">
-                  <p className="text-[10px] text-on-surface-variant font-bold uppercase">Demo Money Available</p>
-                  <p className="text-2xl font-extrabold text-primary mt-1">₹{virtualBalance.toLocaleString('en-IN')}</p>
-                </div>
-
-                {/* Portfolio Assets */}
-                <div className="flex flex-col gap-2 mb-6">
-                  <h4 className="font-bold text-xs text-on-surface mb-1">Your Investments:</h4>
-                  {portfolio.length === 0 ? (
-                    <p className="text-[11px] text-on-surface-variant italic">No virtual assets owned yet.</p>
-                  ) : (
-                    portfolio.map((item, idx) => {
-                      const value = item.qty * item.currentPrice;
-                      const profit = (item.currentPrice - item.avgPrice) * item.qty;
-                      return (
-                        <div key={idx} className="p-3 rounded-xl border border-glass-border flex justify-between items-center bg-white/20 text-[10px]">
-                          <div>
-                            <p className="font-bold text-on-surface">{item.name}</p>
-                            <p className="text-[8px] text-on-surface-variant mt-0.5">Qty: {item.qty} | Avg: ₹{item.avgPrice}</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-bold text-on-surface">₹{value.toLocaleString('en-IN')}</p>
-                            <p className={`text-[8px] font-bold ${profit >= 0 ? 'text-success-emerald' : 'text-error'}`}>
-                              {profit >= 0 ? '+' : ''}₹{profit}
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-
-                {/* Buy / Sell UI */}
-                <div className="border-t border-glass-border pt-4">
-                  <h4 className="font-bold text-xs text-on-surface mb-3">Invest Mock Funds</h4>
-                  <div className="flex flex-col gap-3">
-                    <select 
-                      value={selectedAssetToBuy}
-                      onChange={(e) => setSelectedAssetToBuy(e.target.value)}
-                      className="w-full bg-white/20 border border-glass-border rounded-lg p-2.5 text-xs text-on-surface font-semibold"
-                    >
-                      {assetsCatalog.map(a => (
-                        <option key={a.id} value={a.id}>{a.name} (Price: ₹{a.price})</option>
-                      ))}
-                    </select>
-
-                    <div className="flex justify-between items-center">
-                      <label className="text-xs text-on-surface-variant font-bold">Qty:</label>
-                      <input 
-                        type="number" 
-                        min="1" 
-                        value={tradeQty} 
-                        onChange={(e) => setTradeQty(Math.max(1, Number(e.target.value)))}
-                        className="w-20 bg-white/20 border border-glass-border rounded-lg p-1.5 text-xs text-on-surface text-center font-bold"
-                      />
-                    </div>
-
-                    <div className="flex gap-3 mt-2">
-                      <button 
-                        onClick={() => handlePortfolioTrade('BUY')}
-                        className="flex-1 font-bold text-xs bg-success-emerald text-white py-2.5 rounded-lg hover:opacity-90 transition-all"
-                      >
-                        Buy Asset
-                      </button>
-                      <button 
-                        onClick={() => handlePortfolioTrade('SELL')}
-                        className="flex-1 font-bold text-xs bg-error text-white py-2.5 rounded-lg hover:opacity-90 transition-all"
-                      >
-                        Sell Asset
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-
-          </div>
-        )}
 
         {/* 5. GOVERNMENT SCHEME FINDER */}
         {activeTab === 'schemes' && (
@@ -1427,156 +1329,9 @@ export default function FinanceHub() {
           </div>
         )}
 
-        {/* 6. LEARNING HUB TAB */}
-        {activeTab === 'learning' && (
-          <div className="flex flex-col gap-6 animate-fade-slide-up">
-            
-            {/* Cabinet */}
-            <div className="glass-panel p-6 rounded-2xl border border-glass-border bg-white/40 flex justify-between items-center">
-              <div>
-                <h3 className="font-bold text-sm text-on-surface">Your Achievements Cabinet</h3>
-                <p className="text-xs text-on-surface-variant mt-1">Complete lessons, answer quizzes, and unlock Indian Financial literacy medals!</p>
-              </div>
-              <div className="flex gap-2">
-                {badges.map((b, idx) => (
-                  <span key={idx} className="text-[10px] font-bold bg-[#FFB300]/20 text-[#FFB300] border border-[#FFB300]/40 px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
-                    <span className="material-symbols-outlined text-xs fill">workspace_premium</span> {b}
-                  </span>
-                ))}
-              </div>
-            </div>
 
-            {/* Smart Modules Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[
-                { id: 'l1', title: 'Systematic Investment Plans (SIP)', desc: 'Discover how small, consistent monthly allocations compound into massive retirement wealth.', quiz: 'Q1: What does SIP stand for?', options: ['Secure Income Portfolio', 'Systematic Investment Plan', 'State Investment Program'], answer: 1 },
-                { id: 'l2', title: 'Gold vs Equity Investments', desc: 'Unlock the historical performance differences between Gold ETFs, SGBs, and Nifty index funds.', quiz: 'Q2: SGB stands for?', options: ['Systematic Gold Bond', 'Sovereign Gold Bond', 'State Gold Bill'], answer: 1 },
-                { id: 'l3', title: 'Tax Saving 101 (80C/PPF)', desc: 'Learn how to maximize tax exemptions using PPF, NPS, and Sukanya Samriddhi Yojana tools.', quiz: 'Q3: Section 80C offers tax exemptions up to?', options: ['₹1.5 Lakhs', '₹3 Lakhs', '₹5 Lakhs'], answer: 0 }
-              ].map(m => (
-                <div key={m.id} className="glass-panel p-6 rounded-2xl flex flex-col border border-glass-border">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-3">
-                    <span className="material-symbols-outlined">menu_book</span>
-                  </div>
-                  <h4 className="font-extrabold text-sm text-on-surface leading-tight">{m.title}</h4>
-                  <p className="text-xs text-on-surface-variant leading-relaxed mt-2 flex-grow">{m.desc}</p>
-                  
-                  {/* Lesson Quiz Panel */}
-                  <div className="mt-4 pt-4 border-t border-glass-border">
-                    <p className="text-[10px] text-on-surface-variant font-bold mb-2 uppercase">{m.quiz}</p>
-                    <div className="flex flex-col gap-2">
-                      {m.options.map((opt, idx) => (
-                        <button 
-                          key={idx}
-                          onClick={() => {
-                            if (idx === m.answer) {
-                              handleCompleteLesson(m.id, 100);
-                            } else {
-                              alert("Oops! Incorrect, try again!");
-                            }
-                          }}
-                          className="w-full text-left p-2 rounded-lg bg-white/20 border border-glass-border text-[10px] hover:bg-white/40 font-semibold"
-                        >
-                          {opt}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
 
-          </div>
-        )}
 
-        {/* 7. SAFETY CENTER & EMERGENCY SUPPORT */}
-        {activeTab === 'safety' && (
-          <div className="flex flex-col gap-6 animate-fade-slide-up">
-            
-            {/* emergency loss support toggle */}
-            <div className="glass-panel p-6 rounded-2xl border border-glass-border bg-gradient-to-r from-error/10 to-transparent flex justify-between items-center">
-              <div>
-                <h3 className="font-extrabold text-sm text-on-surface flex items-center gap-2">
-                  <span className="material-symbols-outlined text-error">warning</span>
-                  Emergency Finance Mode
-                </h3>
-                <p className="text-xs text-on-surface-variant mt-1">
-                  Trigger this if you recently experienced job loss or health crises. Access expense reduction and local skill programs.
-                </p>
-              </div>
-              <button 
-                onClick={() => setEmergencyMode(!emergencyMode)}
-                className={`font-bold text-xs px-4 py-2.5 rounded-xl border transition-all ${emergencyMode ? 'bg-error text-white border-transparent' : 'border-error/40 text-error bg-error/5 hover:bg-error/10'}`}
-              >
-                {emergencyMode ? 'Disable Emergency Mode' : 'Enable Emergency Mode'}
-              </button>
-            </div>
-
-            {emergencyMode && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-[fadeSlideUp_0.5s_ease-out]">
-                
-                {/* Emergency Budget plan */}
-                <div className="glass-panel p-6 rounded-2xl flex flex-col border border-glass-border">
-                  <h4 className="font-bold text-sm text-error mb-3 flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-sm">payments</span> Emergency Expense Reduction Checklist
-                  </h4>
-                  <ul className="space-y-3 text-xs text-on-surface-variant leading-relaxed font-semibold">
-                    <li className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-error text-sm">cancel</span> Pause non-essential subscriptions (Gym, OTT, Leisure).
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-success-emerald text-sm">check_circle</span> Downsize grocery plans &amp; pause online dining-out deliveries.
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-success-emerald text-sm">check_circle</span> Apply for interest-free government micro-credits (Mudra Shishu scheme).
-                    </li>
-                  </ul>
-                </div>
-
-                {/* Free skills programmes */}
-                <div className="glass-panel p-6 rounded-2xl flex flex-col border border-glass-border">
-                  <h4 className="font-bold text-sm text-on-surface mb-3 flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-[#FFB300] text-sm">school</span> Recommended Free Local Skill Programs
-                  </h4>
-                  <div className="flex flex-col gap-3">
-                    <div className="p-3 rounded-xl bg-white/20 border border-glass-border flex justify-between items-center text-xs">
-                      <div>
-                        <h5 className="font-bold">PMKVY Technical Training</h5>
-                        <p className="text-[10px] text-on-surface-variant mt-0.5">Duration: 3 Months | Location: Regional Center</p>
-                      </div>
-                      <a href="https://www.pmkvyofficial.org" target="_blank" rel="noreferrer" className="text-[10px] font-bold text-primary hover:underline">Apply</a>
-                    </div>
-                    <div className="p-3 rounded-xl bg-white/20 border border-glass-border flex justify-between items-center text-xs">
-                      <div>
-                        <h5 className="font-bold">DDU-GKY Rural Employment</h5>
-                        <p className="text-[10px] text-on-surface-variant mt-0.5">Duration: 6 Months | Placement Guaranteed</p>
-                      </div>
-                      <a href="http://ddugky.gov.in" target="_blank" rel="noreferrer" className="text-[10px] font-bold text-primary hover:underline">Apply</a>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-            )}
-
-            {/* Safety tips cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[
-                { title: 'UPI Fraud Protection', icon: 'shield', desc: 'Avoid typing your UPI PIN when receiving money. Scammers use fake collect requests. PIN is only needed to pay, never to receive!' },
-                { title: 'Fake Loan App Detection', icon: 'gavel', desc: 'Never borrow from unregistered app stores. Real lending apps must list their associated NBFC/Banks registered under RBI.' },
-                { title: 'Investment Scheme Scams', icon: 'visibility', desc: 'Be wary of schemes promising 20%+ monthly guaranteed returns. Multi-level networking/referral schemes are highly illegal.' }
-              ].map((tip, idx) => (
-                <div key={idx} className="glass-panel p-6 rounded-2xl border border-glass-border flex flex-col">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-3">
-                    <span className="material-symbols-outlined">{tip.icon}</span>
-                  </div>
-                  <h4 className="font-bold text-sm text-on-surface">{tip.title}</h4>
-                  <p className="text-xs text-on-surface-variant leading-relaxed mt-2">{tip.desc}</p>
-                </div>
-              ))}
-            </div>
-
-          </div>
-        )}
 
       </main>
     </div>
