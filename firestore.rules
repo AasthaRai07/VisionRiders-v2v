@@ -1,0 +1,85 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // users collection
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+    
+    // user_course_progress
+    match /user_course_progress/{progressId} {
+      // Assuming document ID is either user_id_course_id or has user_id field
+      allow read, write: if isOwner(resource.data.user_id) || isOwner(request.resource.data.user_id);
+    }
+    
+    // bookmarks
+    match /bookmarks/{bookmarkId} {
+      allow read, write: if isOwner(resource.data.user_id) || isOwner(request.resource.data.user_id);
+    }
+    
+    // skill_gap_reports
+    match /skill_gap_reports/{reportId} {
+      allow read, write: if isOwner(resource.data.user_id) || isOwner(request.resource.data.user_id);
+    }
+    
+    // interview_sessions
+    match /interview_sessions/{sessionId} {
+      allow read, write: if isOwner(resource.data.user_id) || isOwner(request.resource.data.user_id);
+    }
+    
+    // mentor_connections
+    match /mentor_connections/{connectionId} {
+      allow read, write: if isOwner(resource.data.user_id) || isOwner(request.resource.data.user_id);
+    }
+    
+    // saved_jobs
+    match /saved_jobs/{savedJobId} {
+      allow read, write: if isOwner(resource.data.user_id) || isOwner(request.resource.data.user_id);
+    }
+    
+    // finher_scores
+    match /finher_scores/{scoreId} {
+      allow read, write: if isOwner(resource.data.user_id) || isOwner(request.resource.data.user_id);
+    }
+    
+    // community_posts (anyone can read, only auth can write, owner can edit)
+    match /community_posts/{postId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update, delete: if isOwner(resource.data.user_id);
+    }
+    
+    // community_comments
+    match /community_comments/{commentId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update, delete: if isOwner(resource.data.user_id);
+    }
+    
+    // Public read-only collections
+    match /courses/{courseId} {
+      allow read: if true;
+      allow write: if false; // Only admin SDK (Cloud Functions/seed scripts) can write
+    }
+    
+    match /mentors/{mentorId} {
+      allow read: if true;
+      allow write: if false;
+    }
+    
+    match /jobs/{jobId} {
+      allow read: if true;
+      allow write: if false;
+    }
+  }
+}

@@ -2,9 +2,108 @@
 
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function LearningHub() {
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeCategory, setActiveCategory] = useState("All Courses");
+  
+  const [userProgress, setUserProgress] = useState([]);
+  const [loadingProgress, setLoadingProgress] = useState(true);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  // Fetch Continue Learning Progress
+  useEffect(() => {
+    async function fetchProgress() {
+      try {
+        setLoadingProgress(true);
+        const res = await fetch('http://127.0.0.1:5001/hernova-13f01/us-central1/api/users/demo-user-123/userProgress', { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          setUserProgress(data.progress || []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch progress:", error);
+      } finally {
+        setLoadingProgress(false);
+      }
+    }
+    fetchProgress();
+  }, []);
+
+  // Search Debounce Effect
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      setShowDropdown(false);
+      return;
+    }
+
+    const delayDebounceFn = setTimeout(async () => {
+      setIsSearching(true);
+      setShowDropdown(true);
+      try {
+        const res = await fetch(`http://127.0.0.1:5001/hernova-13f01/us-central1/api/search?q=${encodeURIComponent(searchQuery)}`, { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          setSearchResults(data.results || []);
+        }
+      } catch (error) {
+        console.error("Failed to search:", error);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery]);
+
+  const handleCourseClick = async (e, courseId, url) => {
+    e.preventDefault();
+    // Simulate updating access time
+    try {
+      await fetch('http://127.0.0.1:5001/hernova-13f01/us-central1/api/users/demo-user-123/userProgress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ courseId, currentModule: 1, totalModules: 5 }) // dummy values
+      });
+    } catch (err) {
+      console.error(err);
+    }
+    // Navigate to course (in real app, this might be a local route)
+    if (url) {
+      window.open(url, '_blank');
+    }
+  };
+
+  useEffect(() => {
+    async function fetchCourses() {
+      try {
+        setLoading(true);
+        // Using localhost emulator API
+        const url = activeCategory === "All Courses" 
+          ? 'http://127.0.0.1:5001/hernova-13f01/us-central1/api/courses'
+          : `http://127.0.0.1:5001/hernova-13f01/us-central1/api/courses?category=${encodeURIComponent(activeCategory)}`;
+          
+        const res = await fetch(url, { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          setCourses(data.courses || []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch courses:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchCourses();
+  }, [activeCategory]);
+
   useEffect(() => {
     const container = document.getElementById('particles-container');
     if (!container) return;
@@ -74,33 +173,96 @@ export default function LearningHub() {
           </div>
           <div className="w-full md:w-96 relative">
             <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-              <span className="material-symbols-outlined text-tertiary-fixed-dim text-xl">temp_preferences_custom</span>
+              <span className="material-symbols-outlined text-tertiary-fixed-dim text-xl">search</span>
             </div>
-            <input className="w-full bg-glass-overlay backdrop-blur-xl border border-glass-border rounded-full py-3 pl-12 pr-4 text-on-surface placeholder-on-surface-variant focus:outline-none focus:ring-2 focus:ring-[#FFB300]/50 focus:border-[#FFB300]/50 transition-all font-body-md text-body-md shadow-[inset_0_2px_4px_rgba(255,255,255,0.1)]" placeholder="Search courses, mentors..." type="text"/>
+            <input 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => { if (searchQuery.trim()) setShowDropdown(true); }}
+              onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+              className="w-full bg-glass-overlay backdrop-blur-xl border border-glass-border rounded-full py-3 pl-12 pr-4 text-on-surface placeholder-on-surface-variant focus:outline-none focus:ring-2 focus:ring-[#FFB300]/50 focus:border-[#FFB300]/50 transition-all font-body-md text-body-md shadow-[inset_0_2px_4px_rgba(255,255,255,0.1)]" 
+              placeholder="Search courses, mentors..." 
+              type="text"
+            />
+            
+            {/* Search Dropdown */}
+            {showDropdown && (
+              <div className="absolute top-full mt-2 w-full glass-panel rounded-2xl shadow-xl z-50 overflow-hidden flex flex-col max-h-[400px]">
+                {isSearching ? (
+                  <div className="p-6 flex justify-center items-center">
+                    <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                ) : searchResults.length === 0 ? (
+                  <div className="p-6 text-center text-on-surface-variant font-body-sm">
+                    No results found
+                  </div>
+                ) : (
+                  <div className="overflow-y-auto no-scrollbar py-2">
+                    {searchResults.map((result) => (
+                      <a 
+                        key={result.id} 
+                        href={result.courseUrl || "#"} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center p-3 hover:bg-glass-overlay transition-colors border-b border-glass-border last:border-0 group cursor-pointer"
+                        onMouseDown={(e) => {
+                           // Prevent default so the input doesn't lose focus, which would close the dropdown before the click registers
+                           e.preventDefault();
+                        }}
+                        onClick={() => {
+                          // Optionally close dropdown after successful click
+                          setShowDropdown(false);
+                        }}
+                      >
+                        <div className="w-10 h-10 rounded-lg bg-surface-variant flex items-center justify-center mr-4 flex-shrink-0">
+                           <span className="material-symbols-outlined text-on-surface-variant">
+                             {result.source === 'ai' ? 'auto_awesome' : 'school'}
+                           </span>
+                        </div>
+                        <div className="flex-grow min-w-0">
+                          <h4 className="font-body-md text-on-surface truncate group-hover:text-primary transition-colors">{result.courseName}</h4>
+                          <div className="flex items-center text-xs text-on-surface-variant mt-1 space-x-2">
+                            <span className="truncate">{result.platform}</span>
+                            <span>•</span>
+                            <span>{result.pricing}</span>
+                          </div>
+                        </div>
+                        <div className="ml-2 flex-shrink-0">
+                          {result.source === 'local' ? (
+                            <span className="px-2 py-1 rounded-full bg-primary-container/20 text-primary-container text-[10px] font-medium border border-primary-container/30">
+                              In Learning Hub
+                            </span>
+                          ) : (
+                            <span className="px-2 py-1 rounded-full bg-tertiary-container/20 text-tertiary-container text-[10px] font-medium border border-tertiary-container/30 flex items-center">
+                              <span className="material-symbols-outlined text-[10px] mr-1">auto_awesome</span> Suggested
+                            </span>
+                          )}
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
         
         {/* Filter Chips (Horizontal Scroll) */}
         <div className="mb-stack-xl relative overflow-hidden">
           <div className="flex space-x-3 overflow-x-auto no-scrollbar pb-4 pr-8">
-            <button className="flex-shrink-0 glass-panel rounded-full px-6 py-2 font-label-sm text-label-sm text-primary-container bg-surface-container-highest border-primary-container/30 transition-all hover:bg-surface-container-high">
-              All Courses
-            </button>
-            <button className="flex-shrink-0 glass-panel rounded-full px-6 py-2 font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-all hover:bg-glass-overlay">
-              Tech &amp; Data
-            </button>
-            <button className="flex-shrink-0 glass-panel rounded-full px-6 py-2 font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-all hover:bg-glass-overlay">
-              Financial Literacy
-            </button>
-            <button className="flex-shrink-0 glass-panel rounded-full px-6 py-2 font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-all hover:bg-glass-overlay">
-              Career Skills
-            </button>
-            <button className="flex-shrink-0 glass-panel rounded-full px-6 py-2 font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-all hover:bg-glass-overlay">
-              Wellness
-            </button>
-            <button className="flex-shrink-0 glass-panel rounded-full px-6 py-2 font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-all hover:bg-glass-overlay">
-              Leadership
-            </button>
+            {["All Courses", "Tech & Data", "Financial Literacy", "Career Skills", "Wellness", "Leadership"].map(cat => (
+              <button 
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`flex-shrink-0 glass-panel rounded-full px-6 py-2 font-label-sm text-label-sm transition-all ${
+                  activeCategory === cat 
+                    ? "text-primary-container bg-surface-container-highest border-primary-container/30 hover:bg-surface-container-high" 
+                    : "text-on-surface-variant hover:text-primary hover:bg-glass-overlay"
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
           </div>
           {/* Fade gradient for scroll */}
           <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-bg-gradient-start to-transparent pointer-events-none"></div>
@@ -113,138 +275,114 @@ export default function LearningHub() {
             <span className="material-symbols-outlined text-primary-container cursor-pointer hover:scale-110 transition-transform">arrow_forward</span>
           </div>
           <div className="flex overflow-x-auto no-scrollbar space-x-6 pb-6 -mx-margin-mobile px-margin-mobile md:mx-0 md:px-0">
-            {/* Resume Card 1 */}
-            <div className="flex-shrink-0 w-80 md:w-96 glass-panel rounded-2xl p-4 flex flex-col hover:shadow-[0_8px_30px_rgba(240,98,146,0.1)] transition-all cursor-pointer group">
-              <div className="flex items-center space-x-4 mb-4">
-                <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-primary-fixed-dim to-primary flex items-center justify-center text-white flex-shrink-0 shadow-inner">
-                  <span className="material-symbols-outlined text-3xl">insights</span>
-                </div>
-                <div>
-                  <p className="font-label-sm text-label-sm text-primary mb-1">DATA ANALYTICS</p>
-                  <h4 className="font-body-lg text-body-lg text-on-surface line-clamp-2 leading-tight">Introduction to Data Visualisation</h4>
-                </div>
+            {loadingProgress ? (
+              <div className="flex justify-center w-full py-8">
+                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
               </div>
-              <div className="mt-auto">
-                <div className="flex justify-between items-end mb-2">
-                  <span className="font-label-sm text-label-sm text-on-surface-variant">Module 3 of 8</span>
-                  <span className="font-label-sm text-label-sm text-on-surface-variant">45%</span>
-                </div>
-                <div className="w-full h-1.5 bg-glass-overlay border border-glass-border rounded-full overflow-hidden relative">
-                  <div className="absolute top-1/2 -translate-y-1/2 left-[45%] text-[8px] text-[#FFB300] z-10 -ml-1">✦</div>
-                  <div className="h-full bg-gradient-to-r from-primary-container to-[#FFB300] rounded-full w-[45%] relative shadow-[0_0_8px_rgba(255,179,0,0.5)]"></div>
-                </div>
+            ) : userProgress.length === 0 ? (
+              <div className="w-full text-center py-12 glass-panel rounded-2xl border-dashed border-2 border-glass-border">
+                <span className="material-symbols-outlined text-4xl text-on-surface-variant/50 mb-2">school</span>
+                <p className="text-on-surface-variant font-body-md">Start a course to see your progress here.</p>
               </div>
-            </div>
-            
-            {/* Resume Card 2 */}
-            <div className="flex-shrink-0 w-80 md:w-96 glass-panel rounded-2xl p-4 flex flex-col hover:shadow-[0_8px_30px_rgba(240,98,146,0.1)] transition-all cursor-pointer group">
-              <div className="flex items-center space-x-4 mb-4">
-                <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-secondary-fixed-dim to-secondary flex items-center justify-center text-white flex-shrink-0 shadow-inner">
-                  <span className="material-symbols-outlined text-3xl">account_balance</span>
-                </div>
-                <div>
-                  <p className="font-label-sm text-label-sm text-secondary mb-1">FINANCE</p>
-                  <h4 className="font-body-lg text-body-lg text-on-surface line-clamp-2 leading-tight">Negotiating Your First Tech Salary</h4>
-                </div>
-              </div>
-              <div className="mt-auto">
-                <div className="flex justify-between items-end mb-2">
-                  <span className="font-label-sm text-label-sm text-on-surface-variant">Module 1 of 4</span>
-                  <span className="font-label-sm text-label-sm text-on-surface-variant">80%</span>
-                </div>
-                <div className="w-full h-1.5 bg-glass-overlay border border-glass-border rounded-full overflow-hidden relative">
-                  <div className="absolute top-1/2 -translate-y-1/2 left-[80%] text-[8px] text-[#FFB300] z-10 -ml-1">✦</div>
-                  <div className="h-full bg-gradient-to-r from-secondary to-[#FFB300] rounded-full w-[80%] relative shadow-[0_0_8px_rgba(255,179,0,0.5)]"></div>
-                </div>
-              </div>
-            </div>
+            ) : (
+              userProgress.map((progress, index) => {
+                const c = progress.courseDetails || {};
+                // Assign a color based on index
+                const colors = [
+                  { from: 'from-primary-fixed-dim', to: 'to-primary', text: 'text-primary' },
+                  { from: 'from-secondary-fixed-dim', to: 'to-secondary', text: 'text-secondary' },
+                  { from: 'from-tertiary-fixed-dim', to: 'to-tertiary', text: 'text-tertiary' }
+                ];
+                const color = colors[index % colors.length];
+
+                return (
+                  <a 
+                    href={c.courseUrl || "#"} 
+                    onClick={(e) => handleCourseClick(e, progress.courseId, c.courseUrl)}
+                    key={progress.courseId} 
+                    className="flex-shrink-0 w-80 md:w-96 glass-panel rounded-2xl p-4 flex flex-col hover:shadow-[0_8px_30px_rgba(240,98,146,0.1)] transition-all cursor-pointer group"
+                  >
+                    <div className="flex items-center space-x-4 mb-4">
+                      <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${color.from} ${color.to} flex items-center justify-center text-white flex-shrink-0 shadow-inner overflow-hidden relative`}>
+                        {c.thumbnailUrl ? (
+                           <img src={c.thumbnailUrl} alt="thumbnail" className="w-full h-full object-cover opacity-60 mix-blend-overlay" />
+                        ) : (
+                           <span className="material-symbols-outlined text-3xl z-10">insights</span>
+                        )}
+                      </div>
+                      <div>
+                        <p className={`font-label-sm text-label-sm ${color.text} mb-1 uppercase truncate`}>{c.category || 'COURSE'}</p>
+                        <h4 className="font-body-lg text-body-lg text-on-surface line-clamp-2 leading-tight">{c.courseName || 'Loading...'}</h4>
+                      </div>
+                    </div>
+                    <div className="mt-auto">
+                      <div className="flex justify-between items-end mb-2">
+                        <span className="font-label-sm text-label-sm text-on-surface-variant">Module {progress.currentModule} of {progress.totalModules}</span>
+                        <span className="font-label-sm text-label-sm text-on-surface-variant">{progress.percentComplete}%</span>
+                      </div>
+                      <div className="w-full h-1.5 bg-glass-overlay border border-glass-border rounded-full overflow-hidden relative">
+                        {progress.percentComplete > 0 && (
+                           <div className="absolute top-1/2 -translate-y-1/2 text-[8px] text-[#FFB300] z-10 -ml-1" style={{ left: `${progress.percentComplete}%` }}>✦</div>
+                        )}
+                        <div className={`h-full bg-gradient-to-r from-primary-container to-[#FFB300] rounded-full relative shadow-[0_0_8px_rgba(255,179,0,0.5)]`} style={{ width: `${progress.percentComplete}%` }}></div>
+                      </div>
+                    </div>
+                  </a>
+                );
+              })
+            )}
           </div>
         </section>
         
         {/* Recommended Courses Grid */}
         <section>
           <div className="flex items-center justify-between mb-stack-md">
-            <h3 className="font-headline-md text-headline-md text-on-surface">Recommended for You</h3>
+            <h3 className="font-headline-md text-headline-md text-on-surface">{activeCategory === "All Courses" ? "Recommended for You" : `${activeCategory} Courses`}</h3>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
-            {/* Course Card 1 */}
-            <div className="glass-panel rounded-2xl overflow-hidden flex flex-col group hover:shadow-[0_10px_40px_rgba(216,27,96,0.08)] transition-all duration-300">
-              <div className="h-40 w-full relative overflow-hidden bg-surface-variant">
-                <div className="absolute inset-0 bg-cover bg-center group-hover:scale-105 transition-transform duration-500" style={{backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuA5AmL1ris2G6dYw0pCZJdr4wR0JhAhLhnaGFaHfWFcP0bney5UUbVCrZLbkfuVml5RAQaK3bz_XXzQWQZHlGveARG4P3s0nFxAQudzXCNQrUwxqZhcCt40cITYkOWm2ZqF8A5EpBeuDSV4THlZmOqx7HS4AUKa7S7enCaMkBDeX-HLK6AN0VCTtD85Qo1gsLt4HVt79VUmUqtXYxPujebl5b8xGf9adgW3vyNvJ5HJmYuLUTA-HTQ8AvWfYx56GCSwpc69hekggFY')"}}></div>
-                <div className="absolute inset-0 bg-gradient-to-t from-inverse-surface/60 to-transparent"></div>
-                <div className="absolute top-3 right-3 glass-panel px-3 py-1 rounded-full flex items-center space-x-1">
-                  <span className="material-symbols-outlined text-[14px] text-white">schedule</span>
-                  <span className="font-label-sm text-label-sm text-white">4h 30m</span>
-                </div>
-              </div>
-              <div className="p-5 flex flex-col flex-grow">
-                <p className="font-label-sm text-label-sm text-primary mb-2">WEB DEVELOPMENT</p>
-                <h4 className="font-body-lg text-body-lg font-medium text-on-surface mb-2">Frontend Fundamentals</h4>
-                <p className="font-body-md text-body-md text-on-surface-variant line-clamp-2 mb-4">Master HTML, CSS, and modern UI principles with this beginner-friendly course.</p>
-                <div className="mt-auto flex items-center justify-between pt-4 border-t border-glass-border">
-                  <div className="flex -space-x-2">
-                    <img alt="Mentor" className="w-6 h-6 rounded-full border border-white" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDOp195XlVmvJJoEbU7Kg_C888Tgc7xtKk_3xHfgHTJN7dC61NrO1Bz3A66q1wzGF1cIX_BlZiUdbBZqvWls19KUN6Bu3fFbzPX2sohWmpVYwECoxX8a8h6RN_e2ryaOgFIKZ2iAJpMC-8JhwQ0oI1yUOKT-SKFgxJ2SWiTBu5VBa-_SbtHpSMFM7m1XL4Vd3lkFKfMg_0eWgd-W8UGjhZgYzuieA1wT5FHcwi0ztV2CTIFkjBfzg0OxN1qzDnL5FuO_JVqwYFi3cE"/>
-                    <span className="font-label-sm text-label-sm text-on-surface-variant ml-3 flex items-center">By Sarah J.</span>
-                  </div>
-                  <button className="text-primary-container hover:text-primary transition-colors flex items-center justify-center w-8 h-8 rounded-full hover:bg-glass-overlay">
-                    <span className="material-symbols-outlined">bookmark_border</span>
-                  </button>
-                </div>
-              </div>
+          
+          {loading ? (
+            <div className="flex justify-center py-12">
+              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
             </div>
-            
-            {/* Course Card 2 */}
-            <div className="glass-panel rounded-2xl overflow-hidden flex flex-col group hover:shadow-[0_10px_40px_rgba(216,27,96,0.08)] transition-all duration-300">
-              <div className="h-40 w-full relative overflow-hidden bg-surface-variant">
-                <div className="absolute inset-0 bg-cover bg-center group-hover:scale-105 transition-transform duration-500" style={{backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuA_0DJkIx9TFBPVVY2EeNYqC1yNCI8CZcbBnZKkuA7xBUOHnWG8nVxKq6P_-S9tOb-DwdgO5Dm8cszTuVZAD55vbMG0tr256heytT_YAH2FzD6I3dvQDuo4mFLaHw-wrGnUWEnYih9h1hg0jl6N49xl3kJrXAAMdtVp3TxhO-0JqjAzg9WXDgGTyHk5BvB4CPR6AbqVZMRg6Ry8uzkBdXivYF5E5KlKfqTla9iS0TepIjjhz6hPnJM_iI6dc8uEt5BzfjxF75TMMjs')"}}></div>
-                <div className="absolute inset-0 bg-gradient-to-t from-inverse-surface/60 to-transparent"></div>
-                <div className="absolute top-3 right-3 glass-panel px-3 py-1 rounded-full flex items-center space-x-1">
-                  <span className="material-symbols-outlined text-[14px] text-white">schedule</span>
-                  <span className="font-label-sm text-label-sm text-white">2h 15m</span>
-                </div>
-              </div>
-              <div className="p-5 flex flex-col flex-grow">
-                <p className="font-label-sm text-label-sm text-secondary mb-2">CAREER SKILLS</p>
-                <h4 className="font-body-lg text-body-lg font-medium text-on-surface mb-2">Imposter Syndrome &amp; You</h4>
-                <p className="font-body-md text-body-md text-on-surface-variant line-clamp-2 mb-4">Strategies to overcome self-doubt and own your achievements in the workplace.</p>
-                <div className="mt-auto flex items-center justify-between pt-4 border-t border-glass-border">
-                  <div className="flex -space-x-2">
-                    <img alt="Mentor" className="w-6 h-6 rounded-full border border-white" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBS1S3iOQtcdT9tvLnlJ7V43geRsmubYM5EJsXgUEq-n7XaYOYnwTdYHFlq9orbXaFoPoUQJcXlZhHsjtvVyJ2zzQvd6_oRmcmxh0wItqBfxebGHPPvtzMFWMWnJpVLFE91JudPSIOFBNYW3hEy2HZ6SoMztrU00P6zbDOlaF1zzie7wjgQLKk7hOSZLNeZhAxFfKfBfpvalpg3wzIH0dp0NwJr2sSOpg_Uf8oScJG6Gunk289gSo8OA2DEC9S4AJKAkl_jRop2jmk"/>
-                    <span className="font-label-sm text-label-sm text-on-surface-variant ml-3 flex items-center">By Dr. Chen</span>
-                  </div>
-                  <button className="text-primary-container hover:text-primary transition-colors flex items-center justify-center w-8 h-8 rounded-full hover:bg-glass-overlay">
-                    <span className="material-symbols-outlined">bookmark_border</span>
-                  </button>
-                </div>
-              </div>
+          ) : courses.length === 0 ? (
+            <div className="text-center py-12 glass-panel rounded-2xl">
+              <p className="text-on-surface-variant font-body-md">No courses found in this category.</p>
             </div>
-            
-            {/* Course Card 3 */}
-            <div className="glass-panel rounded-2xl overflow-hidden flex flex-col group hover:shadow-[0_10px_40px_rgba(216,27,96,0.08)] transition-all duration-300">
-              <div className="h-40 w-full relative overflow-hidden bg-surface-variant">
-                <div className="absolute inset-0 bg-cover bg-center group-hover:scale-105 transition-transform duration-500" style={{backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuAB_my8-RtoeDAHcXY2i8SNvYvaJqYVcyKaj_IvCiiuy2ORjzmdcMPBgABd0NReVGJErCq7bhUVKt77Y7_DabwLkk9k1YqAHyGKDDqS_tpYsJVlPGcFEehaiGJoye-n9go4eLXcZGiB3JiSuFMC8qETQH4L4FNWYq0ANYz2L8Ic_NsiU-AIlkYyZ7yAHBRhpDXxuJKVBUisZ3NHo2z_nBdgBWlucg_CVho7oS77PHlL-IW7wOg6E4ZyvP8kZ1stCrgQrcgdqTeCf1k')"}}></div>
-                <div className="absolute inset-0 bg-gradient-to-t from-inverse-surface/60 to-transparent"></div>
-                <div className="absolute top-3 right-3 glass-panel px-3 py-1 rounded-full flex items-center space-x-1">
-                  <span className="material-symbols-outlined text-[14px] text-white">schedule</span>
-                  <span className="font-label-sm text-label-sm text-white">6h 00m</span>
-                </div>
-              </div>
-              <div className="p-5 flex flex-col flex-grow">
-                <p className="font-label-sm text-label-sm text-tertiary-container mb-2">FINANCIAL LITERACY</p>
-                <h4 className="font-body-lg text-body-lg font-medium text-on-surface mb-2">Investing for Beginners</h4>
-                <p className="font-body-md text-body-md text-on-surface-variant line-clamp-2 mb-4">Demystifying stocks, bonds, and creating a portfolio that works for your goals.</p>
-                <div className="mt-auto flex items-center justify-between pt-4 border-t border-glass-border">
-                  <div className="flex -space-x-2">
-                    <img alt="Mentor" className="w-6 h-6 rounded-full border border-white" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQPOZbtDhmFAa46rh-buGh1pKE-3C2dmCHAHhgI0DVf_BlE98blYdK2IYDUM3dpQ4mg2Q8BuhmJDcMksvGTuGyQ7UJcY1-Kwk7iDhlMbyzpfQBOkHhcVDVMYLZ3h9Se4r6rmwDVVTL0Yu3o9KrEUB41qxJ-1nS6EIfCqtAu8BgCmVFhZEIYY7QvyudC5V424hPkq5eIgVtD48ECaKr-RMwsJ2V0tdSuOmxVkcp9xJpd1CpHoFpn9n6JhU-8DmadP-pTkygTlt4Tac"/>
-                    <span className="font-label-sm text-label-sm text-on-surface-variant ml-3 flex items-center">By Elena R.</span>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
+              {courses.map(course => (
+                <a href={course.courseUrl || "#"} target={course.courseUrl ? "_blank" : "_self"} rel="noopener noreferrer" key={course.id} className="glass-panel rounded-2xl overflow-hidden flex flex-col group hover:shadow-[0_10px_40px_rgba(216,27,96,0.08)] transition-all duration-300">
+                  <div className="h-40 w-full relative overflow-hidden bg-surface-variant flex items-center justify-center">
+                    {course.thumbnailUrl ? (
+                      <div className="absolute inset-0 bg-cover bg-center group-hover:scale-105 transition-transform duration-500" style={{backgroundImage: `url('${course.thumbnailUrl}')`}}></div>
+                    ) : (
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary-fixed-dim/30 to-secondary-fixed-dim/30 group-hover:scale-105 transition-transform duration-500"></div>
+                    )}
+                    
+                    {!course.thumbnailUrl && <span className="material-symbols-outlined text-5xl text-on-surface-variant/50 relative z-10">school</span>}
+                    <div className="absolute inset-0 bg-gradient-to-t from-inverse-surface/60 to-transparent pointer-events-none z-10"></div>
+                    
+                    <div className="absolute top-3 right-3 glass-panel px-3 py-1 rounded-full flex items-center space-x-1 z-20">
+                      <span className="font-label-sm text-label-sm text-white">{course.pricing}</span>
+                    </div>
                   </div>
-                  <button className="text-primary-container hover:text-primary transition-colors flex items-center justify-center w-8 h-8 rounded-full hover:bg-glass-overlay">
-                    <span className="material-symbols-outlined">bookmark_border</span>
-                  </button>
-                </div>
-              </div>
+                  <div className="p-5 flex flex-col flex-grow">
+                    <p className="font-label-sm text-label-sm text-primary mb-2 uppercase">{course.category}</p>
+                    <h4 className="font-body-lg text-body-lg font-medium text-on-surface mb-2">{course.courseName}</h4>
+                    <p className="font-body-md text-body-md text-on-surface-variant line-clamp-2 mb-4">{course.goodFor}</p>
+                    <div className="mt-auto flex items-center justify-between pt-4 border-t border-glass-border">
+                      <div className="flex -space-x-2">
+                        <span className="font-label-sm text-label-sm text-on-surface-variant flex items-center">Platform: {course.platform}</span>
+                      </div>
+                      <button onClick={(e) => { e.preventDefault(); /* Prevent link click */ }} className="text-primary-container hover:text-primary transition-colors flex items-center justify-center w-8 h-8 rounded-full hover:bg-glass-overlay relative z-20">
+                        <span className="material-symbols-outlined">bookmark_border</span>
+                      </button>
+                    </div>
+                  </div>
+                </a>
+              ))}
             </div>
-          </div>
+          )}
         </section>
       </main>
     </div>
