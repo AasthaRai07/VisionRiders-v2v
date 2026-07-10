@@ -13,6 +13,7 @@ export default function CreateAccountProfile({ onBack, onContinue, onboardingDat
   const [educationLevel, setEducationLevel] = useState(onboardingData.educationLevel || '');
   const [domain, setDomain] = useState(onboardingData.domain || '');
   const [targetRole, setTargetRole] = useState(onboardingData.targetRole || '');
+  const [showPassword, setShowPassword] = useState(false);
 
   // Touched states for blur validation
   const [touched, setTouched] = useState({
@@ -246,18 +247,30 @@ export default function CreateAccountProfile({ onBack, onContinue, onboardingDat
             {/* Password */}
             <div className="space-y-1">
               <label className="block font-label-sm text-label-sm text-on-surface-variant ml-1" htmlFor="signup-password">Password</label>
-              <input 
-                className={`glass-input w-full h-12 px-4 rounded-[14px] font-body-md text-on-surface placeholder:text-on-surface-variant/50 ${
-                  touched.password && errors.password ? 'border-rose-500 focus:border-rose-500' : ''
-                }`} 
-                id="signup-password" 
-                placeholder="••••••••" 
-                type="password" 
-                value={password}
-                onChange={(e) => handleChange('password', e.target.value, setPassword)}
-                onBlur={(e) => handleBlur('password', e.target.value)}
-                required 
-              />
+              <div className="relative">
+                <input 
+                  className={`glass-input w-full h-12 px-4 pr-10 rounded-[14px] font-body-md text-on-surface placeholder:text-on-surface-variant/50 ${
+                    touched.password && errors.password ? 'border-rose-500 focus:border-rose-500' : ''
+                  }`} 
+                  id="signup-password" 
+                  placeholder="••••••••" 
+                  type={showPassword ? "text" : "password"} 
+                  value={password}
+                  onChange={(e) => handleChange('password', e.target.value, setPassword)}
+                  onBlur={(e) => handleBlur('password', e.target.value)}
+                  required 
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant/70 hover:text-primary transition-colors flex items-center justify-center p-1 focus:outline-none"
+                  id="signup-password-toggle-btn"
+                >
+                  <span className="material-symbols-outlined text-[20px]">
+                    {showPassword ? 'visibility_off' : 'visibility'}
+                  </span>
+                </button>
+              </div>
               
               {/* Strength indicator */}
               {password && (

@@ -18,6 +18,7 @@ export default function SignupPage() {
     persona: '',
     resumeUploaded: false,
     resumeFileName: '',
+    resumeText: '',
     certificates: [],
     fullName: '',
     email: '',
@@ -26,10 +27,7 @@ export default function SignupPage() {
     educationLevel: '',
     domain: '',
     targetRole: '',
-    isGoogleAuth: false,
-    resumeText: '',
-    atsScore: null,
-    resumeSkills: []
+    isGoogleAuth: false
   });
 
   // Extract Google Auth data if redirected from Google login page
@@ -60,15 +58,13 @@ export default function SignupPage() {
     setStep('upload');
   };
 
-  const handleUploadContinue = (resumeFile, certificateFiles, parsedData, resumeText) => {
+  const handleUploadContinue = (resumeFile, certificateFiles, resumeParsed, extractedText) => {
     setOnboardingData((prev) => ({
       ...prev,
       resumeUploaded: !!resumeFile,
       resumeFileName: resumeFile ? resumeFile.name : '',
+      resumeText: extractedText || '',
       certificates: certificateFiles.map(f => f.name),
-      resumeText: resumeText || '',
-      atsScore: parsedData ? parsedData.atsScore : null,
-      resumeSkills: parsedData ? parsedData.skills : []
     }));
     setStep('universal');
   };

@@ -40,77 +40,24 @@ export default function ResumeUpload({ onBack, onContinue }) {
   const handleNext = async () => {
     if (resume) {
       setIsParsing(true);
-      
-      const parseAndContinue = async (text) => {
-        try {
-          const res = await fetch('http://127.0.0.1:5001/hernova-13f01/us-central1/api/jobs/parse-resume', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ resumeText: text })
-          });
-          if (res.ok) {
-            const data = await res.json();
-            setIsParsing(false);
-            onContinue(resume, certificates, data.parsed, text);
-          } else {
-            console.error("Failed to parse resume on backend");
-            setIsParsing(false);
-            onContinue(resume, certificates, null, text);
-          }
-        } catch (err) {
-          console.error("Error calling parse-resume API:", err);
-          setIsParsing(false);
-          onContinue(resume, certificates, null, text);
-        }
-      };
-
-      if (resume.type === "text/plain" || resume.name.endsWith(".txt")) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          parseAndContinue(event.target.result);
-        };
-        reader.readAsText(resume);
-      } else if (resume.type === "application/pdf" || resume.name.endsWith(".pdf")) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          const arrayBuffer = event.target.result;
-          const bytes = new Uint8Array(arrayBuffer);
-          let binary = '';
-          const chunkSize = 65536;
-          for (let i = 0; i < bytes.byteLength; i += chunkSize) {
-            const chunk = bytes.subarray(i, i + chunkSize);
-            binary += String.fromCharCode.apply(null, chunk);
-          }
-          
-          const regex = /\(([^)]+)\)/g;
-          const matches = [];
-          let match;
-          const maxScan = Math.min(binary.length, 1200000);
-          const searchStr = binary.substring(0, maxScan);
-          
-          while ((match = regex.exec(searchStr)) !== null) {
-            const val = match[1];
-            if (val.length > 2 && /^[a-zA-Z0-9\s.,@_:\-\/]+$/.test(val) && !val.includes('\\')) {
-              matches.push(val);
-            }
-          }
-          
-          const extracted = matches.join(' ').replace(/\s+/g, ' ').trim();
-          if (extracted.length > 40) {
-            parseAndContinue(extracted);
-          } else {
-            const fileWords = resume.name.replace(/[^a-zA-Z]/g, ' ').replace(/\s+/g, ' ').trim();
-            const fallbackText = `[Scanned PDF: ${resume.name}]\nKeywords: ${fileWords}`;
-            parseAndContinue(fallbackText);
-          }
-        };
-        reader.readAsArrayBuffer(resume);
-      } else {
-        const fallbackText = `[File: ${resume.name}]`;
-        parseAndContinue(fallbackText);
+      try {
+        const formData = new FormData();
+        formData.append('file', resume);
+        const res = await fetch('/api/parse-resume', {
+          method: 'POST',
+          body: formData,
+        });
+        const data = await res.json();
+        const extractedText = data.text || '';
+        setIsParsing(false);
+        onContinue(resume, certificates, true, extractedText);
+      } catch (error) {
+        console.error('Failed to parse resume:', error);
+        setIsParsing(false);
+        onContinue(resume, certificates, true, '');
       }
     } else {
-      onContinue(null, certificates, null, '');
+      onContinue(null, certificates, false, '');
     }
   };
 

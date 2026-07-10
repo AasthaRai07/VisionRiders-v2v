@@ -12,6 +12,8 @@ export default function AdditionalDetails({ onBack, onSubmit, onboardingData }) 
   const [studentCourses, setStudentCourses] = useState([]);
   const [studentConfidence, setStudentConfidence] = useState(3);
   const [studentBlocker, setStudentBlocker] = useState('');
+  const [studentBlockerOther, setStudentBlockerOther] = useState('');
+  const [otherCourseName, setOtherCourseName] = useState('');
 
   // --- Fresher State ---
   const [gradYear, setGradYear] = useState('');
@@ -20,6 +22,7 @@ export default function AdditionalDetails({ onBack, onSubmit, onboardingData }) 
   const [fresherSkills, setFresherSkills] = useState([]);
   const [fresherSkillInput, setFresherSkillInput] = useState('');
   const [fresherBlocker, setFresherBlocker] = useState('');
+  const [fresherBlockerOther, setFresherBlockerOther] = useState('');
 
   // --- Working Professional State ---
   const [currentRole, setCurrentRole] = useState('');
@@ -130,6 +133,10 @@ export default function AdditionalDetails({ onBack, onSubmit, onboardingData }) 
   const handleCourseCheckbox = (course) => {
     if (studentCourses.includes(course)) {
       setStudentCourses(studentCourses.filter((c) => c !== course));
+      // Clear the "Other" course text input when unchecking "Other"
+      if (course === 'Other') {
+        setOtherCourseName('');
+      }
     } else {
       setStudentCourses([...studentCourses, course]);
     }
@@ -174,8 +181,10 @@ export default function AdditionalDetails({ onBack, onSubmit, onboardingData }) 
         hasInternship,
         internshipDetails: hasInternship ? internshipDetails : '',
         studentCourses,
+        otherCourseName: studentCourses.includes('Other') ? otherCourseName : '',
         studentConfidence,
         studentBlocker,
+        blockerOther: studentBlocker === 'Other' ? studentBlockerOther : '',
       };
     } else if (persona === 'fresher') {
       specificData = {
@@ -184,6 +193,7 @@ export default function AdditionalDetails({ onBack, onSubmit, onboardingData }) 
         fresherAppliedCount,
         fresherSkills,
         fresherBlocker,
+        blockerOther: fresherBlocker === 'Other' ? fresherBlockerOther : '',
       };
     } else if (persona === 'professional') {
       specificData = {
@@ -236,6 +246,10 @@ export default function AdditionalDetails({ onBack, onSubmit, onboardingData }) 
         atsScore: onboardingData.atsScore || null
       };
       localStorage.setItem('user_session', JSON.stringify(session));
+      localStorage.setItem('hernova_user_profile', JSON.stringify(finalCollectedData));
+      if (session.email) {
+        localStorage.setItem(`hernova_user_profile_${session.email.toLowerCase()}`, JSON.stringify(finalCollectedData));
+      }
 
       // Save user to simulated DB to allow login later (only if email & password present)
       if (onboardingData.email && onboardingData.password && onboardingData.password !== 'google-oauth-authenticated') {
@@ -367,6 +381,19 @@ export default function AdditionalDetails({ onBack, onSubmit, onboardingData }) 
                   </label>
                 ))}
               </div>
+              {/* Conditional text input when "Other" is checked */}
+              {studentCourses.includes('Other') && (
+                <div className="animate-fade-up mt-2">
+                  <input
+                    className="glass-input w-full h-12 px-4 rounded-[14px] font-body-md text-on-surface placeholder:text-on-surface-variant/50"
+                    placeholder="Which course/certificate?"
+                    type="text"
+                    value={otherCourseName}
+                    onChange={(e) => setOtherCourseName(e.target.value)}
+                    id="other-course-name"
+                  />
+                </div>
+              )}
             </div>
 
             {/* Skill Confidence Slider */}
@@ -398,6 +425,7 @@ export default function AdditionalDetails({ onBack, onSubmit, onboardingData }) 
                   "No projects/portfolio",
                   "Don't know how interviews work",
                   "Lack of guidance",
+                  "Other",
                 ].map((blocker) => (
                   <label key={blocker} className="flex items-center gap-3 p-3 rounded-[12px] bg-white/5 border border-glass-border cursor-pointer hover:bg-glass-overlay/30 transition-colors">
                     <input
@@ -405,7 +433,10 @@ export default function AdditionalDetails({ onBack, onSubmit, onboardingData }) 
                       name="studentBlocker"
                       value={blocker}
                       checked={studentBlocker === blocker}
-                      onChange={(e) => setStudentBlocker(e.target.value)}
+                      onChange={(e) => {
+                        setStudentBlocker(e.target.value);
+                        if (e.target.value !== 'Other') setStudentBlockerOther('');
+                      }}
                       className="accent-primary w-4 h-4"
                       required
                     />
@@ -413,6 +444,19 @@ export default function AdditionalDetails({ onBack, onSubmit, onboardingData }) 
                   </label>
                 ))}
               </div>
+              {/* Conditional text input when "Other" is selected */}
+              {studentBlocker === 'Other' && (
+                <div className="animate-fade-up mt-1">
+                  <input
+                    className="glass-input w-full h-12 px-4 rounded-[14px] font-body-md text-on-surface placeholder:text-on-surface-variant/50"
+                    placeholder="Tell us more..."
+                    type="text"
+                    value={studentBlockerOther}
+                    onChange={(e) => setStudentBlockerOther(e.target.value)}
+                    id="student-blocker-other"
+                  />
+                </div>
+              )}
               {showError('studentBlocker') && (
                 <p className="text-rose-600 font-label-sm text-[11px] mt-0.5 ml-1">This field is required</p>
               )}
@@ -549,6 +593,7 @@ export default function AdditionalDetails({ onBack, onSubmit, onboardingData }) 
                   "No projects/portfolio",
                   "Don't know how interviews work",
                   "Lack of guidance",
+                  "Other",
                 ].map((blocker) => (
                   <label key={blocker} className="flex items-center gap-3 p-3 rounded-[12px] bg-white/5 border border-glass-border cursor-pointer hover:bg-glass-overlay/30 transition-colors">
                     <input
@@ -556,7 +601,10 @@ export default function AdditionalDetails({ onBack, onSubmit, onboardingData }) 
                       name="fresherBlocker"
                       value={blocker}
                       checked={fresherBlocker === blocker}
-                      onChange={(e) => setFresherBlocker(e.target.value)}
+                      onChange={(e) => {
+                        setFresherBlocker(e.target.value);
+                        if (e.target.value !== 'Other') setFresherBlockerOther('');
+                      }}
                       className="accent-primary w-4 h-4"
                       required
                     />
@@ -564,6 +612,19 @@ export default function AdditionalDetails({ onBack, onSubmit, onboardingData }) 
                   </label>
                 ))}
               </div>
+              {/* Conditional text input when "Other" is selected */}
+              {fresherBlocker === 'Other' && (
+                <div className="animate-fade-up mt-1">
+                  <input
+                    className="glass-input w-full h-12 px-4 rounded-[14px] font-body-md text-on-surface placeholder:text-on-surface-variant/50"
+                    placeholder="Tell us more..."
+                    type="text"
+                    value={fresherBlockerOther}
+                    onChange={(e) => setFresherBlockerOther(e.target.value)}
+                    id="fresher-blocker-other"
+                  />
+                </div>
+              )}
               {showError('fresherBlocker') && (
                 <p className="text-rose-600 font-label-sm text-[11px] mt-0.5 ml-1">This field is required</p>
               )}
@@ -844,12 +905,12 @@ export default function AdditionalDetails({ onBack, onSubmit, onboardingData }) 
         )}
 
         {/* Action Buttons */}
-        <div className="flex items-center justify-between pt-6 h-12 gap-4">
+        <div className="flex items-center justify-between pt-6 gap-4">
           <button
             type="button"
             onClick={onBack}
             disabled={isSubmitting}
-            className="btn-glass px-8 h-full rounded-[14px] font-body-md text-body-md font-semibold text-on-surface-variant flex items-center justify-center transition-all disabled:opacity-50"
+            className="btn-glass px-8 py-3.5 rounded-[14px] text-[17px] font-semibold text-on-surface-variant flex items-center justify-center transition-all disabled:opacity-50"
           >
             Back
           </button>
@@ -857,9 +918,9 @@ export default function AdditionalDetails({ onBack, onSubmit, onboardingData }) 
           <button
             type="submit"
             disabled={!isFormValid || isSubmitting}
-            className={`px-8 h-full rounded-[14px] font-body-md text-body-md font-semibold flex items-center justify-center gap-2 transition-all ${
+            className={`px-10 py-3.5 rounded-[14px] text-[17px] font-semibold flex items-center justify-center gap-2.5 transition-all duration-200 ${
               isFormValid && !isSubmitting
-                ? 'bg-gradient-to-r from-[#D4537E] to-[#993556] text-white hover:scale-[1.02] hover:opacity-95 shadow-md active:scale-95' 
+                ? 'bg-gradient-to-r from-[#D4537E] to-[#993556] text-white hover:scale-[1.02] hover:shadow-lg hover:shadow-[#D4537E]/30 shadow-md active:scale-[0.98]' 
                 : 'bg-glass-overlay text-on-surface-variant/30 border border-glass-border opacity-50 cursor-not-allowed'
             }`}
             id="specific-submit-btn"
@@ -872,7 +933,7 @@ export default function AdditionalDetails({ onBack, onSubmit, onboardingData }) 
             ) : (
               <>
                 Submit & Complete
-                <span className="material-symbols-outlined text-[20px] text-white">check</span>
+                <span className="material-symbols-outlined text-[22px] text-white">check</span>
               </>
             )}
           </button>

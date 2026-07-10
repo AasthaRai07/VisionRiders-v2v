@@ -173,6 +173,10 @@ export default function PersonaQuestions({ onBack, onSubmit, onboardingData }) {
         fullName: onboardingData.fullName || 'New User'
       };
       localStorage.setItem('user_session', JSON.stringify(session));
+      localStorage.setItem('hernova_user_profile', JSON.stringify(finalCollectedData));
+      if (session.email) {
+        localStorage.setItem(`hernova_user_profile_${session.email.toLowerCase()}`, JSON.stringify(finalCollectedData));
+      }
 
       // Save user to simulated DB to allow login later
       let registeredUsers = [];
