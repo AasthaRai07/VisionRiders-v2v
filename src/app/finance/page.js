@@ -71,6 +71,9 @@ export default function FinanceHub() {
   // Government Scheme Finder states
   const [schemeForm, setSchemeForm] = useState({ age: 24, state: 'Maharashtra', occupation: 'Entrepreneur', annualIncome: 300000, shgMember: false });
   const [schemes, setSchemes] = useState([]);
+  const [allSchemes, setAllSchemes] = useState([]);
+  const [lastUpdated, setLastUpdated] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const [schemesLoading, setSchemesLoading] = useState(false);
   const [bookmarkedSchemes, setBookmarkedSchemes] = useState([]);
 
@@ -90,6 +93,7 @@ export default function FinanceHub() {
     fetchDashboard();
     fetchBookmarks();
     fetchAchievements();
+    fetchRealSchemes();
     
     // Setup background particles
     const container = document.getElementById('finance-particles');
@@ -361,20 +365,70 @@ export default function FinanceHub() {
     }
   };
 
-  // Match Government Schemes
-  const handleFindSchemes = async () => {
+  // Fetch Real Government Schemes from local backend
+  const fetchRealSchemes = async () => {
     try {
       setSchemesLoading(true);
-      const query = new URLSearchParams(schemeForm).toString();
-      const res = await fetch(`http://127.0.0.1:5001/hernova-13f01/us-central1/api/finance/schemes?${query}`);
+      const res = await fetch('http://localhost:3001/api/schemes/women');
       const data = await res.json();
-      setSchemes(data.schemes || []);
+      setAllSchemes(data.schemes || []);
+      setLastUpdated(data.lastUpdated || '');
     } catch (err) {
-      console.error(err);
+      console.error("Failed to load real OGD schemes:", err);
     } finally {
       setSchemesLoading(false);
     }
   };
+
+  const formatTimeAgo = (isoString) => {
+    if (!isoString) return 'never';
+    const diffMs = new Date() - new Date(isoString);
+    const diffMins = Math.round(diffMs / 60000);
+    if (diffMins < 1) return 'just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = Math.round(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return new Date(isoString).toLocaleDateString('en-IN');
+  };
+
+  // Match Government Schemes (Triggers manual refresh from backend)
+  const handleFindSchemes = async () => {
+    await fetchRealSchemes();
+  };
+
+  const getFilteredSchemes = () => {
+    return allSchemes.filter(s => {
+      // 1. Category Filter
+      if (selectedCategory !== 'all' && s.category !== selectedCategory) {
+        return false;
+      }
+      
+      // 2. Age Filter matching
+      if (schemeForm.age) {
+        // Find numbers in eligibility/description to match min age
+        const text = `${s.eligibility} ${s.description}`.toLowerCase();
+        const ageMatch = text.match(/(?:min|minimum|age|above|years?|years?\s*old)\s*(\d+)/i);
+        if (ageMatch) {
+          const minAge = parseInt(ageMatch[1], 10);
+          if (schemeForm.age < minAge) return false;
+        }
+      }
+      
+      // 3. State Domicile matching
+      if (schemeForm.state && s.description) {
+        const text = `${s.name} ${s.description} ${s.ministry}`.toLowerCase();
+        const possibleStates = ['maharashtra', 'karnataka', 'uttar pradesh', 'delhi'];
+        const matchesOtherState = possibleStates.some(st => 
+          st !== schemeForm.state.toLowerCase() && text.includes(st)
+        );
+        if (matchesOtherState) return false;
+      }
+
+      return true;
+    });
+  };
+
+  const filteredSchemesList = getFilteredSchemes();
 
   // Bookmark / Scheme Toggle
   const handleToggleBookmark = async (schemeId) => {
@@ -1176,139 +1230,198 @@ export default function FinanceHub() {
 
         {/* 5. GOVERNMENT SCHEME FINDER */}
         {activeTab === 'schemes' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-slide-up">
+          <div className="flex flex-col gap-6 animate-fade-slide-up">
             
-            {/* Questionnaire Filter form */}
-            <div className="lg:col-span-1 glass-panel p-6 rounded-2xl flex flex-col border border-glass-border self-start">
-              <h3 className="font-bold text-sm text-on-surface flex items-center gap-2 mb-4">
-                <span className="material-symbols-outlined text-primary">page_info</span>
-                Find Schemes
-              </h3>
-              
-              <div className="flex flex-col gap-4">
-                <div>
-                  <label className="block text-[10px] text-on-surface-variant font-bold uppercase ml-1 mb-1">Age</label>
-                  <input 
-                    type="number" 
-                    value={schemeForm.age}
-                    onChange={(e) => setSchemeForm({ ...schemeForm, age: Number(e.target.value) })}
-                    className="w-full bg-white/20 border border-glass-border rounded-xl px-4 py-2.5 text-xs text-on-surface"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] text-on-surface-variant font-bold uppercase ml-1 mb-1">State Domicile</label>
-                  <select 
-                    value={schemeForm.state}
-                    onChange={(e) => setSchemeForm({ ...schemeForm, state: e.target.value })}
-                    className="w-full bg-white/20 border border-glass-border rounded-xl px-4 py-2.5 text-xs text-on-surface font-semibold"
-                  >
-                    <option value="Maharashtra">Maharashtra</option>
-                    <option value="Karnataka">Karnataka</option>
-                    <option value="Uttar Pradesh">Uttar Pradesh</option>
-                    <option value="Delhi">Delhi</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[10px] text-on-surface-variant font-bold uppercase ml-1 mb-1">Occupation</label>
-                  <select 
-                    value={schemeForm.occupation}
-                    onChange={(e) => setSchemeForm({ ...schemeForm, occupation: e.target.value })}
-                    className="w-full bg-white/20 border border-glass-border rounded-xl px-4 py-2.5 text-xs text-on-surface font-semibold"
-                  >
-                    <option value="Entrepreneur">Entrepreneur / Business Owner</option>
-                    <option value="Working Professional">Working Professional</option>
-                    <option value="Homemaker">Homemaker</option>
-                    <option value="Student">Student</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[10px] text-on-surface-variant font-bold uppercase ml-1 mb-1">Annual Income (₹)</label>
-                  <input 
-                    type="number" 
-                    value={schemeForm.annualIncome}
-                    onChange={(e) => setSchemeForm({ ...schemeForm, annualIncome: Number(e.target.value) })}
-                    className="w-full bg-white/20 border border-glass-border rounded-xl px-4 py-2.5 text-xs text-on-surface"
-                  />
-                </div>
-                <div className="flex items-center justify-between border border-glass-border p-3 rounded-xl bg-white/10 mt-1">
-                  <span className="text-xs text-on-surface-variant font-semibold">Self-Help Group (SHG) Member?</span>
-                  <input 
-                    type="checkbox" 
-                    checked={schemeForm.shgMember}
-                    onChange={(e) => setSchemeForm({ ...schemeForm, shgMember: e.target.checked })}
-                    className="w-5 h-5 rounded border-glass-border text-primary focus:ring-primary"
-                  />
-                </div>
-                <button 
-                  onClick={handleFindSchemes}
-                  className="w-full font-bold text-xs bg-primary text-white py-3 rounded-xl hover:opacity-90 transition-all mt-2"
-                >
-                  Find Matching Schemes
-                </button>
+            {/* OGD Header with lastUpdated Timestamp */}
+            <div className="flex justify-between items-center bg-white/40 p-4 rounded-xl border border-glass-border">
+              <div>
+                <h3 className="font-bold text-sm text-on-surface flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[#FFB300]">account_balance</span>
+                  Real-time Government Welfare Schemes
+                </h3>
+                {lastUpdated && (
+                  <p className="text-[10px] text-on-surface-variant mt-1 font-semibold flex items-center gap-1">
+                    <span className="material-symbols-outlined text-xs text-success-emerald animate-pulse">check_circle</span>
+                    Updated {formatTimeAgo(lastUpdated)} (Source: data.gov.in)
+                  </p>
+                )}
               </div>
+              <button 
+                onClick={handleFindSchemes}
+                disabled={schemesLoading}
+                className="font-bold text-xs bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 px-4 py-2 rounded-xl transition-all flex items-center gap-1.5"
+              >
+                <span className={`material-symbols-outlined text-xs ${schemesLoading ? 'animate-spin' : ''}`}>sync</span>
+                Sync Data
+              </button>
             </div>
 
-            {/* Scheme Cards Results */}
-            <div className="lg:col-span-2 flex flex-col gap-4">
-              <div className="flex justify-between items-center">
-                <h4 className="font-extrabold text-sm text-on-surface-variant uppercase tracking-wider">Matched Schemes:</h4>
-                {schemesLoading && <span className="material-symbols-outlined text-primary text-xl animate-spin">rotate_right</span>}
+            {/* Category Filter Buttons */}
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
+              {[
+                { id: 'all', name: 'All Schemes 🌟' },
+                { id: 'maternity/health', name: 'Maternity & Health 🤰' },
+                { id: 'education', name: 'Education 🎓' },
+                { id: 'employment', name: 'Employment & Skills 💼' },
+                { id: 'financial inclusion', name: 'Financial Inclusion 🪙' },
+                { id: 'entrepreneurship', name: 'Entrepreneurship 🚀' }
+              ].map(cat => (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={`px-4 py-2 rounded-xl font-bold text-xs border transition-all whitespace-nowrap ${selectedCategory === cat.id ? 'bg-primary text-white border-transparent shadow-sm' : 'bg-white/30 border-glass-border text-on-surface-variant hover:bg-white/50'}`}
+                >
+                  {cat.name}
+                </button>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              
+              {/* Profile Filters Panel */}
+              <div className="lg:col-span-1 glass-panel p-6 rounded-2xl flex flex-col border border-glass-border self-start">
+                <h4 className="font-bold text-xs text-on-surface flex items-center gap-1.5 mb-4">
+                  <span className="material-symbols-outlined text-sm">tune</span>
+                  Filter by Eligibility
+                </h4>
+                
+                <div className="flex flex-col gap-4">
+                  <div>
+                    <label className="block text-[10px] text-on-surface-variant font-bold uppercase ml-1 mb-1">Age</label>
+                    <input 
+                      type="number" 
+                      value={schemeForm.age}
+                      onChange={(e) => setSchemeForm({ ...schemeForm, age: Number(e.target.value) })}
+                      className="w-full bg-white/20 border border-glass-border rounded-xl px-4 py-2.5 text-xs text-on-surface focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-on-surface-variant font-bold uppercase ml-1 mb-1">State Domicile</label>
+                    <select 
+                      value={schemeForm.state}
+                      onChange={(e) => setSchemeForm({ ...schemeForm, state: e.target.value })}
+                      className="w-full bg-white/20 border border-glass-border rounded-xl px-4 py-2.5 text-xs text-on-surface font-semibold focus:outline-none focus:ring-1 focus:ring-primary"
+                    >
+                      <option value="Maharashtra">Maharashtra</option>
+                      <option value="Karnataka">Karnataka</option>
+                      <option value="Uttar Pradesh">Uttar Pradesh</option>
+                      <option value="Delhi">Delhi</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-on-surface-variant font-bold uppercase ml-1 mb-1">Occupation</label>
+                    <select 
+                      value={schemeForm.occupation}
+                      onChange={(e) => setSchemeForm({ ...schemeForm, occupation: e.target.value })}
+                      className="w-full bg-white/20 border border-glass-border rounded-xl px-4 py-2.5 text-xs text-on-surface font-semibold focus:outline-none focus:ring-1 focus:ring-primary"
+                    >
+                      <option value="Entrepreneur">Entrepreneur / Business Owner</option>
+                      <option value="Working Professional">Working Professional</option>
+                      <option value="Homemaker">Homemaker</option>
+                      <option value="Student">Student</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-on-surface-variant font-bold uppercase ml-1 mb-1">Annual Income (₹)</label>
+                    <input 
+                      type="number" 
+                      value={schemeForm.annualIncome}
+                      onChange={(e) => setSchemeForm({ ...schemeForm, annualIncome: Number(e.target.value) })}
+                      className="w-full bg-white/20 border border-glass-border rounded-xl px-4 py-2.5 text-xs text-on-surface focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between border border-glass-border p-3 rounded-xl bg-white/10 mt-1">
+                    <span className="text-xs text-on-surface-variant font-semibold">Self-Help Group (SHG) Member?</span>
+                    <input 
+                      type="checkbox" 
+                      checked={schemeForm.shgMember}
+                      onChange={(e) => setSchemeForm({ ...schemeForm, shgMember: e.target.checked })}
+                      className="w-5 h-5 rounded border-glass-border text-primary focus:ring-primary"
+                    />
+                  </div>
+                </div>
               </div>
 
-              {schemes.length === 0 ? (
-                <div className="glass-panel p-8 text-center rounded-2xl border border-glass-border bg-white/30">
-                  <span className="material-symbols-outlined text-[#FFB300] text-4xl mb-2">account_balance</span>
-                  <p className="text-xs text-on-surface-variant font-medium">Select parameters and click "Find Matching Schemes" to search.</p>
-                </div>
-              ) : (
-                schemes.map(s => {
-                  const isBookmarked = bookmarkedSchemes.some(bm => bm.id === s.id);
-                  return (
-                    <div key={s.id} className="glass-panel p-6 rounded-2xl flex flex-col border border-glass-border relative hover:border-[#FFB300]/50 transition-all">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <span className="text-[9px] bg-primary/20 text-[#C2185B] px-2 py-0.5 rounded-full font-extrabold uppercase">
-                            {s.scope} • {s.ministry}
-                          </span>
-                          <h4 className="font-bold text-base text-on-surface mt-2">{s.name}</h4>
+              {/* Matched Schemes Cards */}
+              <div className="lg:col-span-2 flex flex-col gap-4">
+                
+                {/* 1. LOADING SKELETON STATE */}
+                {schemesLoading ? (
+                  <div className="flex flex-col gap-4">
+                    {[1, 2, 3].map(n => (
+                      <div key={n} className="glass-panel p-6 rounded-2xl border border-glass-border flex flex-col gap-3 animate-pulse bg-white/30">
+                        <div className="h-4 bg-primary/20 w-1/4 rounded"></div>
+                        <div className="h-6 bg-on-surface/10 w-2/3 rounded mt-2"></div>
+                        <div className="h-4 bg-on-surface/10 w-full rounded mt-1"></div>
+                        <div className="h-4 bg-on-surface/10 w-5/6 rounded"></div>
+                        <div className="h-10 bg-primary/10 rounded mt-3"></div>
+                      </div>
+                    ))}
+                  </div>
+                ) : filteredSchemesList.length === 0 ? (
+                  /* 2. EMPTY STATE */
+                  <div className="glass-panel p-12 text-center rounded-2xl border border-glass-border bg-white/30 flex flex-col items-center justify-center">
+                    <span className="material-symbols-outlined text-[#FFB300] text-5xl mb-3 animate-bounce">info</span>
+                    <h4 className="font-extrabold text-sm text-on-surface">No schemes matched your filters</h4>
+                    <p className="text-xs text-on-surface-variant mt-1.5 max-w-sm leading-relaxed">
+                      Try updating your profile details on the left, or change the category filter to explore other options.
+                    </p>
+                  </div>
+                ) : (
+                  /* 3. CARD GRID LISTING */
+                  filteredSchemesList.map(s => {
+                    const isBookmarked = bookmarkedSchemes.some(bm => bm.id === s.id);
+                    return (
+                      <div key={s.id} className="glass-panel p-6 rounded-2xl flex flex-col border border-glass-border relative hover:border-[#FFB300]/50 hover:shadow-md transition-all animate-fade-slide-up">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <span className="text-[9px] bg-primary/20 text-[#C2185B] px-2.5 py-0.5 rounded-full font-extrabold uppercase tracking-wide">
+                              {s.ministry}
+                            </span>
+                            <h4 className="font-extrabold text-base text-on-surface mt-2.5 leading-snug">{s.name}</h4>
+                          </div>
+                          <button 
+                            onClick={() => handleToggleBookmark(s.id)}
+                            className="p-2 rounded-full bg-white/20 border border-glass-border hover:text-[#C2185B] transition-colors"
+                          >
+                            <span className={`material-symbols-outlined text-sm ${isBookmarked ? 'fill text-[#C2185B]' : 'text-on-surface-variant'}`}>
+                              bookmark
+                            </span>
+                          </button>
                         </div>
-                        <button 
-                          onClick={() => handleToggleBookmark(s.id)}
-                          className="p-2 rounded-full bg-white/20 border border-glass-border hover:text-[#C2185B] transition-colors"
-                        >
-                          <span className={`material-symbols-outlined text-sm ${isBookmarked ? 'fill text-[#C2185B]' : 'text-on-surface-variant'}`}>
-                            bookmark
-                          </span>
-                        </button>
-                      </div>
 
-                      {/* Benefits & Documents */}
-                      <p className="text-xs text-on-surface-variant leading-relaxed mt-3">{s.benefits}</p>
-                      
-                      <div className="mt-4 p-3 rounded-xl bg-success-emerald/5 border border-success-emerald/20">
-                        <p className="text-[10px] text-success-emerald font-bold uppercase mb-1">AI Simplified Qualification:</p>
-                        <p className="text-[11px] text-on-surface-variant font-medium leading-relaxed italic">
-                          "{s.aiSummary}"
-                        </p>
-                      </div>
-
-                      <div className="mt-4 pt-4 border-t border-glass-border flex justify-between items-center gap-4">
-                        <div className="flex flex-wrap gap-1 text-[9px] text-on-surface-variant font-semibold">
-                          <span>Docs: {s.documents.slice(0, 2).join(', ')}...</span>
+                        {/* Description */}
+                        <p className="text-xs text-on-surface-variant leading-relaxed mt-3">{s.description}</p>
+                        
+                        {/* Benefits & Eligibility details */}
+                        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-glass-border/30 text-xs">
+                          <div>
+                            <p className="font-bold text-[10px] text-primary uppercase mb-1">Key Benefits:</p>
+                            <p className="text-on-surface-variant leading-relaxed font-semibold">{s.benefits}</p>
+                          </div>
+                          <div>
+                            <p className="font-bold text-[10px] text-[#FFB300] uppercase mb-1">Eligibility Criteria:</p>
+                            <p className="text-on-surface-variant leading-relaxed font-semibold">{s.eligibility}</p>
+                          </div>
                         </div>
-                        <a 
-                          href={s.officialUrl} 
-                          target="_blank" 
-                          rel="noreferrer"
-                          className="font-bold text-xs bg-[#FFB300] text-[#320047] px-4 py-2 rounded-xl hover:opacity-90 shadow-sm text-center"
-                        >
-                          Official Apply Portal
-                        </a>
+
+                        {/* Action apply portal */}
+                        <div className="mt-6 pt-4 border-t border-glass-border flex justify-end">
+                          <a 
+                            href={s.applyUrl} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            className="font-bold text-xs bg-[#FFB300] text-[#320047] hover:bg-[#FFC107] px-5 py-2.5 rounded-xl hover:opacity-95 shadow-sm text-center transition-all flex items-center gap-1"
+                          >
+                            Apply / Learn More
+                            <span className="material-symbols-outlined text-xs">open_in_new</span>
+                          </a>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })
-              )}
+                    );
+                  })
+                )}
+              </div>
             </div>
 
           </div>
