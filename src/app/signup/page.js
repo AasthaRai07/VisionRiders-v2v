@@ -6,6 +6,7 @@ import PersonaSelect from '@/components/auth/PersonaSelect';
 import ResumeUpload from '@/components/auth/ResumeUpload';
 import CreateAccountProfile from '@/components/auth/CreateAccountProfile';
 import AdditionalDetails from '@/components/auth/AdditionalDetails';
+import AuthBackground from '@/components/auth/AuthBackground';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -83,8 +84,7 @@ export default function SignupPage() {
 
   return (
     <div className="h-screen m-0 p-0 overflow-hidden font-body-md text-body-md text-on-surface selection:bg-primary-container selection:text-white">
-      {/* Flat Background */}
-      <div className="fixed inset-0 w-full h-full -z-10 bg-[#FFF7F9]"></div>
+      <AuthBackground />
 
       {/* Main Content Area */}
       <main className="h-full flex items-center justify-center p-6 md:p-12 relative z-10 overflow-y-auto">

@@ -1,0 +1,95 @@
+{
+  "note": "This file provides last-resort fallback responses if BOTH Gemini and Groq fail during a live demo. These are realistic, pre-written outputs for a sample resume/role combo. Only returned after both providers have been tried and failed.",
+
+  "fallback_skill_gap_analysis": {
+    "target_role": "Data Analyst",
+    "extracted_profile": {
+      "years_experience": 4,
+      "gap_duration_years": 3,
+      "past_roles": ["Junior Data Analyst", "Business Analyst Intern"]
+    },
+    "still_solid_skills": [
+      "Excel (advanced formulas, pivot tables)",
+      "Basic SQL (joins, aggregations)",
+      "Data visualization fundamentals",
+      "Stakeholder communication"
+    ],
+    "decayed_skills": [
+      {
+        "skill": "Python for data analysis (pandas)",
+        "reason": "Library versions and best practices have evolved significantly in 3 years",
+        "resource_link": "https://www.coursera.org/specializations/python"
+      },
+      {
+        "skill": "SQL window functions",
+        "reason": "Advanced querying techniques may need a refresh",
+        "resource_link": "https://www.coursera.org/learn/sql-for-data-science"
+      }
+    ],
+    "new_since_left_skills": [
+      {
+        "skill": "AI-assisted data analysis tools (e.g. Copilot for Excel, ChatGPT for SQL generation)",
+        "reason": "Emerged as standard practice after 2023",
+        "resource_link": "https://www.coursera.org/"
+      },
+      {
+        "skill": "Modern BI tools (Power BI updates, Looker Studio)",
+        "reason": "Significant feature updates since your last role",
+        "resource_link": "https://www.coursera.org/"
+      }
+    ],
+    "ats_keyword_flags": [
+      "Missing: 'data pipeline', 'dashboard automation', 'A/B testing'"
+    ],
+    "seven_day_plan": [
+      { "day": 1, "skill": "Python refresh", "resource_link": "https://www.coursera.org/specializations/python" },
+      { "day": 2, "skill": "Python refresh (cont.)", "resource_link": "https://www.coursera.org/specializations/python" },
+      { "day": 3, "skill": "SQL window functions", "resource_link": "https://www.coursera.org/learn/sql-for-data-science" },
+      { "day": 4, "skill": "Modern BI tools overview", "resource_link": "https://www.coursera.org/" },
+      { "day": 5, "skill": "AI-assisted analysis tools", "resource_link": "https://www.coursera.org/" },
+      { "day": 6, "skill": "Resume + ATS keyword pass", "resource_link": "https://www.coursera.org/" },
+      { "day": 7, "skill": "Mock interview practice", "resource_link": "internal:/interview-coach" }
+    ]
+  },
+
+  "fallback_interview_questions": [
+    {
+      "type": "technical",
+      "question": "Can you walk me through how you would clean and prepare a messy dataset for analysis?"
+    },
+    {
+      "type": "technical",
+      "question": "How would you decide between using a bar chart versus a line chart to present data to a non-technical stakeholder?"
+    },
+    {
+      "type": "behavioral",
+      "question": "Tell me about a time you had to explain a complex data finding to someone without a technical background."
+    },
+    {
+      "type": "gap_explanation",
+      "question": "I noticed a gap in your work history over the past few years. Can you walk me through that time and how you've stayed engaged with the field?"
+    }
+  ],
+
+  "fallback_interview_feedback": {
+    "clarity_score": 78,
+    "confidence_score": 65,
+    "technical_accuracy_score": 82,
+    "summary": "Strong technical grounding and clear communication overall. The gap-explanation answer would benefit from a more confident, forward-looking framing rather than an apologetic tone."
+  },
+
+  "fallback_gap_rewrite": {
+    "original_answer": "I took a break for about 3 years to take care of my family, so I haven't really worked during that time. I know it's been a while so I might be a bit rusty.",
+    "rewritten_answer": "I took a 3-year career break to focus on my family, during which I also completed several self-paced courses in data analysis and stayed current with industry tools through independent projects. I'm returning with a strong foundation and a clear plan to quickly re-integrate into a fast-paced analytics role.",
+    "highlighted_changes": [
+      {
+        "original_phrase": "haven't really worked during that time",
+        "rewritten_phrase": "also completed several self-paced courses and stayed current with industry tools"
+      },
+      {
+        "original_phrase": "I might be a bit rusty",
+        "rewritten_phrase": "returning with a strong foundation and a clear plan"
+      }
+    ]
+  }
+}

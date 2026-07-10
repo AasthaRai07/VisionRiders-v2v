@@ -1,0 +1,184 @@
+{
+  "courses": [
+    {
+      "title": "CS50: Introduction to Computer Science",
+      "description": "Harvard's renowned intro to computer science and programming fundamentals.",
+      "category": "Tech & Data",
+      "platform_source": "edX",
+      "external_url": "https://www.edx.org/cs50",
+      "is_free": true,
+      "duration": "12 weeks",
+      "difficulty_level": "Beginner"
+    },
+    {
+      "title": "Python for Everybody",
+      "description": "Learn Python programming from the ground up, designed for complete beginners.",
+      "category": "Tech & Data",
+      "platform_source": "Coursera",
+      "external_url": "https://www.coursera.org/specializations/python",
+      "is_free": true,
+      "duration": "8 months (self-paced)",
+      "difficulty_level": "Beginner"
+    },
+    {
+      "title": "Responsive Web Design",
+      "description": "Master HTML, CSS, and modern UI principles with this beginner-friendly course.",
+      "category": "Tech & Data",
+      "platform_source": "freeCodeCamp",
+      "external_url": "https://www.freecodecamp.org/learn/2022/responsive-web-design/",
+      "is_free": true,
+      "duration": "4h 30m",
+      "difficulty_level": "Beginner"
+    },
+    {
+      "title": "Data Analytics with Python",
+      "description": "Introduction to data visualisation and analytics using Python.",
+      "category": "Tech & Data",
+      "platform_source": "NPTEL",
+      "external_url": "https://nptel.ac.in/",
+      "is_free": true,
+      "duration": "8 weeks",
+      "difficulty_level": "Beginner"
+    },
+    {
+      "title": "SQL for Data Science",
+      "description": "Foundational SQL skills for data analyst roles.",
+      "category": "Tech & Data",
+      "platform_source": "Coursera",
+      "external_url": "https://www.coursera.org/learn/sql-for-data-science",
+      "is_free": true,
+      "duration": "4 weeks",
+      "difficulty_level": "Beginner"
+    },
+    {
+      "title": "Machine Learning Specialization",
+      "description": "Andrew Ng's foundational ML course for data science and ML engineering tracks.",
+      "category": "Tech & Data",
+      "platform_source": "Coursera",
+      "external_url": "https://www.coursera.org/specializations/machine-learning-introduction",
+      "is_free": true,
+      "duration": "3 months",
+      "difficulty_level": "Intermediate"
+    },
+    {
+      "title": "Financial Markets",
+      "description": "Demystifying stocks, bonds, and creating a portfolio that works for your goals.",
+      "category": "Financial Literacy",
+      "platform_source": "Coursera",
+      "external_url": "https://www.coursera.org/learn/financial-markets-global",
+      "is_free": true,
+      "duration": "7 weeks",
+      "difficulty_level": "Beginner"
+    },
+    {
+      "title": "Personal & Family Financial Planning",
+      "description": "Budgeting fundamentals and long-term financial planning basics.",
+      "category": "Financial Literacy",
+      "platform_source": "Coursera",
+      "external_url": "https://www.coursera.org/learn/personal-family-financial-planning",
+      "is_free": true,
+      "duration": "6 weeks",
+      "difficulty_level": "Beginner"
+    },
+    {
+      "title": "Khan Academy: Personal Finance",
+      "description": "Self-paced, beginner-friendly personal finance basics.",
+      "category": "Financial Literacy",
+      "platform_source": "Khan Academy",
+      "external_url": "https://www.khanacademy.org/college-careers-more/personal-finance",
+      "is_free": true,
+      "duration": "Self-paced",
+      "difficulty_level": "Beginner"
+    },
+    {
+      "title": "Negotiating Your First Tech Salary",
+      "description": "Negotiation, mediation and conflict resolution strategies for the workplace.",
+      "category": "Financial Literacy",
+      "platform_source": "Coursera",
+      "external_url": "https://www.coursera.org/learn/negotiation-mediation-conflict-resolution",
+      "is_free": true,
+      "duration": "5 weeks",
+      "difficulty_level": "Intermediate"
+    },
+    {
+      "title": "Resume Writing & LinkedIn Optimization",
+      "description": "Craft a standout resume and LinkedIn profile for your career comeback.",
+      "category": "Career Skills",
+      "platform_source": "Coursera",
+      "external_url": "https://www.coursera.org/",
+      "is_free": true,
+      "duration": "3 weeks",
+      "difficulty_level": "Beginner"
+    },
+    {
+      "title": "Successful Career Development",
+      "description": "Broad career-planning strategies for navigating your professional path.",
+      "category": "Career Skills",
+      "platform_source": "Coursera",
+      "external_url": "https://www.coursera.org/learn/career-development-planning",
+      "is_free": true,
+      "duration": "4 weeks",
+      "difficulty_level": "Beginner"
+    },
+    {
+      "title": "Imposter Syndrome & You",
+      "description": "Strategies to overcome self-doubt and own your achievements in the workplace.",
+      "category": "Career Skills",
+      "platform_source": "YouTube (curated)",
+      "external_url": "https://www.youtube.com/",
+      "is_free": true,
+      "duration": "2h 15m",
+      "difficulty_level": "Beginner"
+    },
+    {
+      "title": "Interview Skills: Master the Interview",
+      "description": "Build interview fluency and confidence, ties directly into Mock Interview practice.",
+      "category": "Career Skills",
+      "platform_source": "Coursera",
+      "external_url": "https://www.coursera.org/",
+      "is_free": true,
+      "duration": "3 weeks",
+      "difficulty_level": "Beginner"
+    },
+    {
+      "title": "The Science of Well-Being",
+      "description": "Yale's widely-cited course on happiness and building better habits.",
+      "category": "Wellness",
+      "platform_source": "Coursera",
+      "external_url": "https://www.coursera.org/learn/the-science-of-well-being",
+      "is_free": true,
+      "duration": "10 weeks",
+      "difficulty_level": "Beginner"
+    },
+    {
+      "title": "Mindfulness and Well-being",
+      "description": "Practical mindfulness techniques for stress and burnout management.",
+      "category": "Wellness",
+      "platform_source": "Coursera",
+      "external_url": "https://www.coursera.org/",
+      "is_free": true,
+      "duration": "4 weeks",
+      "difficulty_level": "Beginner"
+    },
+    {
+      "title": "Women in Leadership: Inspiring Positive Change",
+      "description": "Leadership development designed around women's career trajectories.",
+      "category": "Leadership",
+      "platform_source": "Coursera",
+      "external_url": "https://www.coursera.org/learn/women-in-leadership",
+      "is_free": true,
+      "duration": "4 weeks",
+      "difficulty_level": "Intermediate"
+    },
+    {
+      "title": "Leading People and Teams",
+      "description": "Michigan's specialization on team leadership and management fundamentals.",
+      "category": "Leadership",
+      "platform_source": "Coursera",
+      "external_url": "https://www.coursera.org/specializations/leading-teams",
+      "is_free": true,
+      "duration": "6 months",
+      "difficulty_level": "Intermediate"
+    }
+  ]
+}

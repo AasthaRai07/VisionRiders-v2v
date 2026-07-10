@@ -11,6 +11,18 @@ export default function ProfileSettings() {
 
   const [userFullName, setUserFullName] = useState('Aditi Sharma');
   const [userEmail, setUserEmail] = useState('aditi.s@example.com');
+  const [profilePic, setProfilePic] = useState('https://lh3.googleusercontent.com/aida-public/AB6AXuD1DzQkx0PsfN6ekGqSXbugjtniWgsn40DxeNMbDUPEMizw8sKu1Ej2a5zQOS0jUgj2AcPhX_z79bgEzOSmaVgSD5jtvTR9xY49gSdjz8HXKao5yz0wDOvJPPzWEIV93APWboI45mybkKzVz1yqNLRnnBcCtncqb6wqFaSmmOrHe0_7G7a7PCHODfiqBOqtVNcTVyrVV6sqQmWeQauXxUr_rP5Fqor5WEjX9PbRtHU_Lpf7bgzRUVxZ3TnUfsUIADb009hSVf6dSt0');
+
+  const handleProfilePicChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setProfilePic(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   useEffect(() => {
     const session = localStorage.getItem('user_session');
@@ -40,10 +52,17 @@ export default function ProfileSettings() {
       <main className="md:ml-64 pt-24 md:pt-32 px-margin-mobile md:px-margin-desktop pb-32 max-w-container-max mx-auto relative z-10 w-full">
         {/* Header Section */}
         <header className="flex flex-col items-center mb-stack-xl relative text-center">
-          <div className="relative w-32 h-32 md:w-40 md:h-40 mb-stack-md">
+          <div className="relative w-32 h-32 md:w-40 md:h-40 mb-stack-md group cursor-pointer">
             <div className="absolute inset-0 rounded-full score-ring p-1 shadow-[0_0_20px_rgba(255,186,56,0.3)]">
-              <div className="w-full h-full rounded-full bg-surface flex items-center justify-center p-1">
-                <img className="w-full h-full object-cover rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD1DzQkx0PsfN6ekGqSXbugjtniWgsn40DxeNMbDUPEMizw8sKu1Ej2a5zQOS0jUgj2AcPhX_z79bgEzOSmaVgSD5jtvTR9xY49gSdjz8HXKao5yz0wDOvJPPzWEIV93APWboI45mybkKzVz1yqNLRnnBcCtncqb6wqFaSmmOrHe0_7G7a7PCHODfiqBOqtVNcTVyrVV6sqQmWeQauXxUr_rP5Fqor5WEjX9PbRtHU_Lpf7bgzRUVxZ3TnUfsUIADb009hSVf6dSt0"/>
+              <div className="w-full h-full rounded-full bg-surface flex items-center justify-center p-1 relative overflow-hidden">
+                <img className="w-full h-full object-cover rounded-full" src={profilePic}/>
+                
+                {/* Hover Overlay */}
+                <label className="absolute inset-0 bg-black/50 text-white flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full cursor-pointer z-10 m-1">
+                  <span className="material-symbols-outlined text-2xl mb-1">photo_camera</span>
+                  <span className="text-xs font-label-sm uppercase">Edit</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={handleProfilePicChange} />
+                </label>
               </div>
             </div>
           </div>
