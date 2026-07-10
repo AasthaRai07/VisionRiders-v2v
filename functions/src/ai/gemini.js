@@ -1,7 +1,7 @@
 const { GoogleGenAI } = require('@google/genai');
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-const model = 'gemini-2.5-flash';
+const model = 'gemini-2.0-flash';
 
 const BASELINE_SKILLS = {
   'Software Developer': [
@@ -23,13 +23,132 @@ const BASELINE_SKILLS = {
   'Data Scientist/ML Engineer': [
     'Python', 'Machine Learning', 'Deep Learning', 'TensorFlow', 'PyTorch', 
     'NLP', 'Computer Vision', 'SQL', 'Data Modeling', 'Cloud Platforms (AWS/GCP)'
+  ],
+  'UX Designer': [
+    'Figma', 'User Research', 'Prototyping', 'Wireframing', 'Design Systems',
+    'Usability Testing', 'Information Architecture', 'Interaction Design',
+    'Accessibility (WCAG)', 'Visual Design'
+  ],
+  'Product Manager': [
+    'Product Strategy', 'User Stories', 'Roadmapping', 'A/B Testing',
+    'Stakeholder Management', 'SQL', 'Agile/Scrum', 'Market Research',
+    'Data-Driven Decision Making', 'Competitive Analysis'
+  ],
+  'Software Engineer': [
+    'JavaScript', 'TypeScript', 'React', 'Node.js', 'Git', 'REST APIs',
+    'SQL', 'NoSQL', 'Agile Methodologies', 'System Design', 'CI/CD',
+    'Data Structures & Algorithms', 'Docker', 'Cloud Platforms'
   ]
 };
 
-async function parseResumeAndExtractProfile(resumeText, targetRole) {
+// ─── userType-specific prompt context ───────────────────────────────────────
+
+function getResumePromptContext(userType) {
+  switch (userType) {
+    case 'student':
+      return `This user is a STUDENT currently studying. 
+Focus on coursework, personal projects, certifications, and academic history. 
+Do NOT assume prior work experience. Prioritize academic achievements and learning trajectory.`;
+
+    case 'fresher':
+      return `This user is a FRESHER — recently graduated with no/minimal full-time work experience, seeking their first job. 
+Treat this as job-readiness for a FULL-TIME entry-level role (not an internship). 
+Weight final-year projects, capstone work, any completed internship, and certifications more heavily than pure coursework. 
+Expectations are slightly higher than for students — expect some project depth, possibly one internship already, but no multi-year experience.`;
+
+    case 'returnship':
+      return `This user is RETURNING TO WORK after a career break. 
+Frame gaps as skills that have decayed or evolved since their last working period. 
+Identify what was once strong but may need refreshing, and what is entirely new in the industry since they left.`;
+
+    case 'professional':
+    default:
+      return `This user is a WORKING PROFESSIONAL looking for career growth or a lateral move. 
+Frame this as a career-growth/lateral-move gap analysis. 
+They have current work experience — focus on what they need to grow into their target role.`;
+  }
+}
+
+function getSkillGapPromptAndKeys(userType) {
+  switch (userType) {
+    case 'student':
+      return {
+        bucket1Key: 'have',
+        bucket2Key: 'should_learn_soon',
+        bucket3Key: 'must_have_for_internship',
+        bucket1Label: 'Have',
+        bucket2Label: 'Should Learn Soon',
+        bucket3Label: 'Must-Have for Internship',
+        planTitle: '7-Day Internship Prep Plan',
+        classifyInstruction: `Classify skills for a STUDENT preparing for an internship:
+1. "have": Skills the student already possesses from coursework/projects.
+2. "should_learn_soon": Skills that would strengthen their profile but aren't critical yet.
+3. "must_have_for_internship": Skills they MUST learn to land an internship in this role.
+Prioritize "must_have_for_internship" skills first in the 7-day plan since the student is building from scratch.`
+      };
+
+    case 'fresher':
+      return {
+        bucket1Key: 'have',
+        bucket2Key: 'should_strengthen',
+        bucket3Key: 'must_have_for_role',
+        bucket1Label: 'Have',
+        bucket2Label: 'Should Strengthen',
+        bucket3Label: 'Must-Have for This Role',
+        planTitle: '7-Day Job-Ready Sprint',
+        classifyInstruction: `Classify skills for a FRESHER seeking their first full-time entry-level job (NOT an internship):
+1. "have": Skills the fresher already has from projects, capstone, or an internship.
+2. "should_strengthen": Skills they have at a basic level but need to deepen for job-readiness.
+3. "must_have_for_role": Critical skills they're missing for this entry-level role.
+Prioritize closing "must_have_for_role" gaps fastest in the 7-day plan since they may be actively applying now.`
+      };
+
+    case 'returnship':
+      return {
+        bucket1Key: 'still_solid',
+        bucket2Key: 'decayed',
+        bucket3Key: 'new_since_left',
+        bucket1Label: 'Still Solid',
+        bucket2Label: 'Needs Refresh',
+        bucket3Label: 'New Since You Left',
+        planTitle: '7-Day Recovery Plan',
+        classifyInstruction: `Classify skills for someone RETURNING after a career break:
+1. "still_solid": Core competencies they still maintain well.
+2. "decayed": Skills they once had but likely need refreshing after time away.
+3. "new_since_left": Skills that are new in the industry since they left — critical gaps to fill.
+Balance the 7-day plan between refreshing decayed skills and learning new ones.`
+      };
+
+    case 'professional':
+    default:
+      return {
+        bucket1Key: 'strong_fit',
+        bucket2Key: 'growth_area',
+        bucket3Key: 'skill_gap_for_target',
+        bucket1Label: 'Strong Fit',
+        bucket2Label: 'Growth Area',
+        bucket3Label: 'Skill Gap for Target Role',
+        planTitle: '7-Day Growth Plan',
+        classifyInstruction: `Classify skills for a WORKING PROFESSIONAL pursuing career growth:
+1. "strong_fit": Skills where the user is already strong for the target role.
+2. "growth_area": Skills that exist but need deepening to reach the target level.
+3. "skill_gap_for_target": Skills entirely missing that the target role requires.
+Focus the 7-day plan on the most impactful growth areas and gaps.`
+      };
+  }
+}
+
+// ─── AI Functions ───────────────────────────────────────────────────────────
+
+async function parseResumeAndExtractProfile(resumeText, targetRole, userType = 'professional', industry = 'Tech') {
   try {
+    const userContext = getResumePromptContext(userType);
+    
     const prompt = `
-      You are an expert technical recruiter analyzing a resume for a ${targetRole} role.
+      You are an expert technical recruiter analyzing a resume for a ${targetRole} role in the ${industry} industry.
+      
+      ${userContext}
+      
       Extract the following information and return it strictly as JSON. No markdown formatting, just raw JSON.
       
       {
@@ -58,27 +177,25 @@ async function parseResumeAndExtractProfile(resumeText, targetRole) {
   }
 }
 
-async function generateSkillGapAnalysis(extractedSkills, targetRole) {
+async function generateSkillGapAnalysis(extractedSkills, targetRole, userType = 'professional', industry = 'Tech') {
   try {
     const baseline = BASELINE_SKILLS[targetRole] || BASELINE_SKILLS['Software Developer'];
+    const config = getSkillGapPromptAndKeys(userType);
     
     const prompt = `
-      You are a career coach. Compare these extracted skills against this baseline for a ${targetRole}.
+      You are a career coach. Compare these extracted skills against this baseline for a ${targetRole} in the ${industry} industry.
       Extracted Skills: ${extractedSkills.join(', ')}
       Baseline Skills: ${baseline.join(', ')}
 
-      Categorize the skills into:
-      1. still_solid: Skills the user has that are in the baseline.
-      2. decayed: Skills the user has but likely need refreshing.
-      3. new_since_left: Skills in the baseline that the user is missing entirely.
+      ${config.classifyInstruction}
 
-      Also create a structured 7-day study plan focused on the new_since_left and decayed skills.
+      Also create a structured 7-day study plan titled "${config.planTitle}" focused on the priority skills.
 
       Return strictly as JSON (no markdown):
       {
-        "still_solid": ["skill1", "skill2"],
-        "decayed": ["skill3"],
-        "new_since_left": ["skill4", "skill5"],
+        "${config.bucket1Key}": ["skill1", "skill2"],
+        "${config.bucket2Key}": ["skill3"],
+        "${config.bucket3Key}": ["skill4", "skill5"],
         "seven_day_plan": [
           { "day": 1, "skill": "skill3", "resource_link": "search_term_for_course" }
         ]
@@ -91,7 +208,21 @@ async function generateSkillGapAnalysis(extractedSkills, targetRole) {
     });
 
     const jsonString = response.text.replace(/```json/g, '').replace(/```/g, '').trim();
-    return JSON.parse(jsonString);
+    const parsed = JSON.parse(jsonString);
+    
+    // Normalize the response to always include the bucket keys the frontend expects
+    return {
+      bucket1: parsed[config.bucket1Key] || [],
+      bucket2: parsed[config.bucket2Key] || [],
+      bucket3: parsed[config.bucket3Key] || [],
+      seven_day_plan: parsed.seven_day_plan || [],
+      labels: {
+        bucket1: config.bucket1Label,
+        bucket2: config.bucket2Label,
+        bucket3: config.bucket3Label,
+        planTitle: config.planTitle
+      }
+    };
   } catch (error) {
     console.error("Error generating skill gap analysis with Gemini:", error);
     throw new Error("Failed to generate skill gap analysis.");
@@ -193,5 +324,6 @@ module.exports = {
   generateSkillGapAnalysis,
   generateInterviewQuestions,
   generateInterviewFeedback,
-  rewriteGapExplanation
+  rewriteGapExplanation,
+  getSkillGapPromptAndKeys
 };

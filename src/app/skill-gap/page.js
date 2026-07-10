@@ -2,8 +2,228 @@
 
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
+import { useEffect, useState, useRef } from 'react';
+
+// ─── Config map driven by persona ──────────────────────────────────────────
+
+const PERSONA_CONFIG = {
+  student: {
+    bucket1Label: 'Have',
+    bucket2Label: 'Should Learn Soon',
+    bucket3Label: 'Must-Have for Internship',
+    bucket1Desc: 'Skills you already have from coursework & projects.',
+    bucket2Desc: 'Skills that would strengthen your internship profile.',
+    bucket3Desc: 'Critical skills you must learn for an internship.',
+    planTitle: '7-Day Internship Prep Plan',
+    roles: ['UX Design Intern', 'Data Science Intern', 'Software Engineering Intern', 'PM Intern'],
+    bucket1Icon: 'check_circle',
+    bucket2Icon: 'trending_up',
+    bucket3Icon: 'priority_high',
+  },
+  fresher: {
+    bucket1Label: 'Have',
+    bucket2Label: 'Should Strengthen',
+    bucket3Label: 'Must-Have for This Role',
+    bucket1Desc: 'Skills you already have from projects & internships.',
+    bucket2Desc: 'Skills to deepen for full-time job-readiness.',
+    bucket3Desc: 'Critical missing skills for this entry-level role.',
+    planTitle: '7-Day Job-Ready Sprint',
+    roles: ['Junior UX Designer', 'Associate Data Scientist', 'Junior Software Engineer', 'Associate PM'],
+    bucket1Icon: 'check_circle',
+    bucket2Icon: 'build',
+    bucket3Icon: 'star',
+  },
+  professional: {
+    bucket1Label: 'Strong Fit',
+    bucket2Label: 'Growth Area',
+    bucket3Label: 'Skill Gap for Target Role',
+    bucket1Desc: 'Skills where you\'re already strong for the target role.',
+    bucket2Desc: 'Skills that exist but need deepening.',
+    bucket3Desc: 'Skills entirely missing that the target role requires.',
+    planTitle: '7-Day Growth Plan',
+    roles: ['Data Scientist', 'UX Designer', 'Product Manager', 'Software Engineer'],
+    bucket1Icon: 'verified',
+    bucket2Icon: 'trending_up',
+    bucket3Icon: 'lightbulb',
+  },
+  returnship: {
+    bucket1Label: 'Still Solid',
+    bucket2Label: 'Needs Refresh',
+    bucket3Label: 'New Since You Left',
+    bucket1Desc: 'Core competencies you maintain well.',
+    bucket2Desc: 'Skills that need a quick update.',
+    bucket3Desc: 'Critical gaps to fill for this role.',
+    planTitle: '7-Day Recovery Plan',
+    roles: ['Data Scientist', 'UX Designer', 'Product Manager', 'Software Engineer'],
+    bucket1Icon: 'check_circle',
+    bucket2Icon: 'update',
+    bucket3Icon: 'star',
+  },
+};
+
+const API_BASE = 'http://127.0.0.1:5001/hernova-13f01/us-central1/api';
 
 export default function SkillGapAnalyzer() {
+  // ─── State ─────────────────────────────────────────────────────────────
+  const [persona, setPersona] = useState(null);      // from profile
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [selectedRole, setSelectedRole] = useState('');
+  const [resumeFile, setResumeFile] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState(null);
+  const [error, setError] = useState(null);
+  const fileInputRef = useRef(null);
+  
+  // Autocomplete state
+  const [allRoles, setAllRoles] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredRoles, setFilteredRoles] = useState([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [selectedIndustry, setSelectedIndustry] = useState('Tech');
+  const dropdownRef = useRef(null);
+
+  const config = PERSONA_CONFIG[persona] || PERSONA_CONFIG.professional;
+
+  // ─── Fetch user profile on mount ───────────────────────────────────────
+  useEffect(() => {
+    async function fetchProfile() {
+      try {
+        const res = await fetch(`${API_BASE}/users/demo-user-123/profile`, { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.profile && data.profile.persona) {
+            setPersona(data.profile.persona);
+          } else {
+            setPersona(null); // will default to professional
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch profile:", err);
+      } finally {
+        setLoadingProfile(false);
+      }
+    }
+    fetchProfile();
+  }, []);
+
+  // ─── Fetch target roles on mount ───────────────────────────────────────
+  useEffect(() => {
+    async function fetchRoles() {
+      try {
+        const res = await fetch(`${API_BASE}/skill-gap/roles`);
+        if (res.ok) {
+          const data = await res.json();
+          setAllRoles(data.roles || []);
+        }
+      } catch (err) {
+        console.error("Failed to fetch roles:", err);
+      }
+    }
+    fetchRoles();
+  }, []);
+
+  // ─── Autocomplete logic ────────────────────────────────────────────────
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredRoles([]);
+      return;
+    }
+    
+    const query = searchQuery.toLowerCase();
+    const results = allRoles.filter(role => {
+      const matchName = role.roleName.toLowerCase().includes(query);
+      const matchAlias = (role.aliases || []).some(alias => alias.toLowerCase().includes(query));
+      return matchName || matchAlias;
+    }).slice(0, 8); // limit results
+    
+    setFilteredRoles(results);
+  }, [searchQuery, allRoles]);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [dropdownRef]);
+
+  // Default to first role when config changes
+  useEffect(() => {
+    if (config.roles.length > 0 && !selectedRole) {
+      const defRole = config.roles[1] || config.roles[0];
+      setSelectedRole(defRole);
+      setSearchQuery(defRole);
+    }
+  }, [config, selectedRole]);
+
+  // ─── File handling ─────────────────────────────────────────────────────
+  const handleFileSelect = (file) => {
+    if (file && (file.type === 'application/pdf' || file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || file.name.endsWith('.txt'))) {
+      setResumeFile(file);
+      setError(null);
+    } else if (file) {
+      setError('Please upload a PDF, DOCX, or TXT file.');
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    handleFileSelect(file);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  // ─── Analyze resume ────────────────────────────────────────────────────
+  const handleAnalyze = async () => {
+    if (!resumeFile || !selectedRole) return;
+    
+    setIsAnalyzing(true);
+    setError(null);
+    setAnalysisResult(null);
+
+    try {
+      // Read file as text
+      const text = await resumeFile.text();
+      
+      const res = await fetch(`${API_BASE}/skill-gap/analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          resume_text: text,
+          target_role: selectedRole,
+          user_type: persona || 'professional',
+          industry: selectedIndustry
+        })
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.details || errData.error || 'Analysis failed');
+      }
+
+      const data = await res.json();
+      setAnalysisResult(data);
+    } catch (err) {
+      console.error("Analysis failed:", err);
+      setError(err.message || 'Something went wrong. Please try again.');
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  // ─── Render ────────────────────────────────────────────────────────────
   return (
     <div className="relative text-on-surface flex-grow flex flex-col min-h-screen overflow-x-hidden">
       <style dangerouslySetInnerHTML={{__html: `
@@ -54,6 +274,16 @@ export default function SkillGapAnalyzer() {
               Find Your Path <span className="text-tertiary-fixed-dim text-2xl">✦</span>
           </h2>
           <p className="font-body-lg text-body-lg text-on-surface-variant">Upload your resume, we'll map the gap.</p>
+          
+          {/* Profile missing banner */}
+          {!loadingProfile && !persona && (
+            <div className="mt-2 glass-panel rounded-xl px-4 py-3 flex items-center gap-3 border border-[#FFB300]/30">
+              <span className="material-symbols-outlined text-[#FFB300]">info</span>
+              <p className="text-sm text-on-surface-variant">
+                <a href="/profile" className="text-primary hover:underline font-medium">Update your profile</a> to personalize this analysis.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* STEP 1: Upload Card */}
@@ -63,181 +293,419 @@ export default function SkillGapAnalyzer() {
             <span className="w-8 h-8 rounded-full bg-primary-container/20 text-primary flex items-center justify-center text-sm font-bold border border-primary/30">1</span>
             Resume Analysis
           </h3>
-          <div className="dropzone-container cursor-pointer group">
-            <div className="dropzone-border border-2 border-dashed border-[#FFB300]/50 rounded-2xl p-10 flex flex-col items-center justify-center gap-4 transition-all duration-300 bg-white/5 relative">
-              <div className="w-16 h-16 rounded-full bg-primary-container/10 flex items-center justify-center text-primary animate-bounce">
-                <span className="material-symbols-outlined text-4xl">cloud_upload</span>
-              </div>
-              <div className="text-center">
-                <p className="font-bold text-lg mb-1">Drag and drop your resume here</p>
-                <p className="text-sm text-on-surface-variant">PDF, DOCX up to 5MB</p>
-              </div>
-              <button className="mt-4 px-6 py-2 rounded-full border border-primary text-primary hover:bg-primary hover:text-[#320047] transition-colors font-semibold">
-                  Browse Files
-              </button>
+          
+          {/* Dropzone */}
+          <div 
+            className="dropzone-container cursor-pointer group"
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <input 
+              ref={fileInputRef}
+              type="file" 
+              accept=".pdf,.docx,.txt"
+              className="hidden"
+              onChange={(e) => handleFileSelect(e.target.files[0])}
+            />
+            <div className={`dropzone-border border-2 border-dashed rounded-2xl p-10 flex flex-col items-center justify-center gap-4 transition-all duration-300 bg-white/5 relative ${
+              isDragging ? 'border-[#FFB300] bg-[#FFB300]/5' : 'border-[#FFB300]/50'
+            } ${resumeFile ? 'border-success-emerald/50' : ''}`}>
+              {resumeFile ? (
+                <>
+                  <div className="w-16 h-16 rounded-full bg-success-emerald/10 flex items-center justify-center text-success-emerald">
+                    <span className="material-symbols-outlined text-4xl">task_alt</span>
+                  </div>
+                  <div className="text-center">
+                    <p className="font-bold text-lg mb-1 text-success-emerald">{resumeFile.name}</p>
+                    <p className="text-sm text-on-surface-variant">{(resumeFile.size / 1024).toFixed(1)} KB • Click to change</p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="w-16 h-16 rounded-full bg-primary-container/10 flex items-center justify-center text-primary animate-bounce">
+                    <span className="material-symbols-outlined text-4xl">cloud_upload</span>
+                  </div>
+                  <div className="text-center">
+                    <p className="font-bold text-lg mb-1">Drag and drop your resume here</p>
+                    <p className="text-sm text-on-surface-variant">PDF, DOCX, TXT up to 5MB</p>
+                  </div>
+                  <button className="mt-4 px-6 py-2 rounded-full border border-primary text-primary hover:bg-primary hover:text-[#320047] transition-colors font-semibold">
+                      Browse Files
+                  </button>
+                </>
+              )}
             </div>
           </div>
           
-          <div className="flex flex-col gap-3 mt-4">
-            <p className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Target Role</p>
-            <div className="flex flex-wrap gap-3">
-              <div>
-                <input className="peer sr-only chip-radio" id="role-ds" name="role" type="radio"/>
-                <label className="cursor-pointer px-4 py-2 rounded-full border border-glass-border bg-white/10 hover:bg-white/20 transition-colors backdrop-blur-md inline-flex items-center gap-2 text-sm" htmlFor="role-ds">
-                    Data Scientist
-                </label>
+          {/* Target Role Autocomplete */}
+          <div className="flex flex-col gap-3 mt-4" ref={dropdownRef}>
+            <label className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Target Role</label>
+            <div className="relative">
+              <div className="flex items-center bg-white/5 border border-[#FFB300]/50 rounded-xl px-4 py-3 focus-within:border-[#FFB300] focus-within:bg-[#FFB300]/5 transition-all">
+                <span className="material-symbols-outlined text-on-surface-variant mr-3">search</span>
+                <input
+                  type="text"
+                  placeholder="Search for a role (e.g. Data Scientist, SWE, Quant...)"
+                  className="bg-transparent border-none outline-none w-full text-on-surface placeholder:text-on-surface-variant/50"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setShowDropdown(true);
+                    setSelectedRole(e.target.value); // keep it synced if they just type and don't click
+                  }}
+                  onFocus={() => setShowDropdown(true)}
+                />
               </div>
-              <div>
-                <input defaultChecked className="peer sr-only chip-radio" id="role-ux" name="role" type="radio"/>
-                <label className="cursor-pointer px-4 py-2 rounded-full border border-glass-border bg-white/10 hover:bg-white/20 transition-colors backdrop-blur-md inline-flex items-center gap-2 text-sm" htmlFor="role-ux">
-                    UX Designer
-                </label>
-              </div>
-              <div>
-                <input className="peer sr-only chip-radio" id="role-pm" name="role" type="radio"/>
-                <label className="cursor-pointer px-4 py-2 rounded-full border border-glass-border bg-white/10 hover:bg-white/20 transition-colors backdrop-blur-md inline-flex items-center gap-2 text-sm" htmlFor="role-pm">
-                    Product Manager
-                </label>
-              </div>
-              <div>
-                <input className="peer sr-only chip-radio" id="role-se" name="role" type="radio"/>
-                <label className="cursor-pointer px-4 py-2 rounded-full border border-glass-border bg-white/10 hover:bg-white/20 transition-colors backdrop-blur-md inline-flex items-center gap-2 text-sm" htmlFor="role-se">
-                    Software Engineer
-                </label>
+              
+              {showDropdown && filteredRoles.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-[#2d1b36] border border-glass-border rounded-xl shadow-2xl z-50 max-h-64 overflow-y-auto">
+                  {filteredRoles.map(role => (
+                    <div 
+                      key={role.id || role.roleName} 
+                      className="px-4 py-3 hover:bg-white/10 cursor-pointer flex justify-between items-center border-b border-white/5 last:border-0"
+                      onClick={() => {
+                        setSelectedRole(role.roleName);
+                        setSelectedIndustry(role.industry);
+                        setSearchQuery(role.roleName);
+                        setShowDropdown(false);
+                      }}
+                    >
+                      <div>
+                        <p className="font-medium text-on-surface">{role.roleName}</p>
+                        {role.aliases && role.aliases.length > 0 && (
+                          <p className="text-xs text-on-surface-variant">Also known as: {role.aliases.join(', ')}</p>
+                        )}
+                      </div>
+                      <span className="text-[10px] uppercase tracking-wider bg-primary/20 text-primary px-2 py-1 rounded-full border border-primary/30 whitespace-nowrap">
+                        {role.industry}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            {/* Suggested Roles (Quick Select) */}
+            <div className="mt-2">
+              <p className="text-xs text-on-surface-variant mb-2">Suggested for you:</p>
+              <div className="flex flex-wrap gap-2">
+                {config.roles.map((role) => (
+                  <div key={role}>
+                    <input 
+                      className="peer sr-only chip-radio" 
+                      id={`role-${role.replace(/\s+/g, '-')}`} 
+                      name="role" 
+                      type="radio" 
+                      checked={selectedRole === role}
+                      onChange={() => {
+                        setSelectedRole(role);
+                        const matched = allRoles.find(r => r.roleName === role);
+                        setSelectedIndustry(matched ? matched.industry : 'Design & Product');
+                        setSearchQuery(role);
+                      }}
+                    />
+                    <label 
+                      className="cursor-pointer px-3 py-1.5 rounded-full border border-glass-border bg-white/10 hover:bg-white/20 transition-colors backdrop-blur-md inline-flex items-center gap-2 text-xs text-on-surface" 
+                      htmlFor={`role-${role.replace(/\s+/g, '-')}`}
+                    >
+                      {role}
+                    </label>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
-        </section>
 
-        {/* STEP 2: Results */}
-        <section className="flex flex-col gap-6">
-          <h3 className="font-headline-md text-headline-md font-medium flex items-center gap-2">
-            <span className="w-8 h-8 rounded-full bg-primary-container/20 text-primary flex items-center justify-center text-sm font-bold border border-primary/30">2</span>
-            Skill Mapping
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Column 1: Solid */}
-            <div className="glass-panel rounded-2xl p-6 flex flex-col gap-4 border-t-4 border-t-success-emerald">
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-success-emerald">check_circle</span>
-                <h4 className="font-bold text-success-emerald">Still Solid</h4>
-              </div>
-              <p className="text-sm text-on-surface-variant">Core competencies you maintain well.</p>
-              <div className="flex flex-wrap gap-2 mt-2">
-                <span className="px-3 py-1.5 bg-success-emerald/10 text-success-emerald border border-success-emerald/20 rounded-lg text-sm animate-slide-up stagger-1">Figma</span>
-                <span className="px-3 py-1.5 bg-success-emerald/10 text-success-emerald border border-success-emerald/20 rounded-lg text-sm animate-slide-up stagger-2">User Research</span>
-                <span className="px-3 py-1.5 bg-success-emerald/10 text-success-emerald border border-success-emerald/20 rounded-lg text-sm animate-slide-up stagger-3">Prototyping</span>
-              </div>
-            </div>
-            
-            {/* Column 2: Decayed */}
-            <div className="glass-panel rounded-2xl p-6 flex flex-col gap-4 border-t-4 border-t-[#FFB300]">
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-[#FFB300]">update</span>
-                <h4 className="font-bold text-[#FFB300]">Needs Refresh</h4>
-              </div>
-              <p className="text-sm text-on-surface-variant">Skills that need a quick update.</p>
-              <div className="flex flex-wrap gap-2 mt-2">
-                <span className="px-3 py-1.5 bg-[#FFB300]/10 text-[#FFB300] border border-[#FFB300]/30 rounded-lg text-sm animate-slide-up stagger-2 flex items-center gap-1">
-                    WCAG 2.1 <span className="material-symbols-outlined text-[14px]">arrow_right_alt</span> 2.2
-                </span>
-                <span className="px-3 py-1.5 bg-[#FFB300]/10 text-[#FFB300] border border-[#FFB300]/30 rounded-lg text-sm animate-slide-up stagger-3">Design Systems</span>
-              </div>
-            </div>
-            
-            {/* Column 3: New */}
-            <div className="glass-panel rounded-2xl p-6 flex flex-col gap-4 border-t-4 border-t-primary">
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary">star</span>
-                <h4 className="font-bold text-primary">New Since You Left</h4>
-              </div>
-              <p className="text-sm text-on-surface-variant">Critical gaps to fill for this role.</p>
-              <div className="flex flex-wrap gap-2 mt-2">
-                <span className="px-3 py-1.5 bg-primary/10 text-primary border border-primary/20 rounded-lg text-sm animate-slide-up stagger-3">Generative AI Tools</span>
-                <span className="px-3 py-1.5 bg-primary/10 text-primary border border-primary/20 rounded-lg text-sm animate-slide-up stagger-4">Figma Variables</span>
-                <span className="px-3 py-1.5 bg-primary/10 text-primary border border-primary/20 rounded-lg text-sm animate-slide-up stagger-5">Spatial UI</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Timeline */}
-        <section className="glass-panel rounded-2xl p-8 mb-10">
-          <div className="flex justify-between items-center mb-8">
-            <h3 className="font-headline-md text-headline-md font-medium">7-Day Recovery Plan</h3>
-            <button className="text-primary font-medium flex items-center gap-1 hover:underline text-sm">
-                View Full Path <span className="material-symbols-outlined text-sm">arrow_forward</span>
+          {/* Analyze Button */}
+          {resumeFile && selectedRole && (
+            <button
+              onClick={handleAnalyze}
+              disabled={isAnalyzing}
+              className={`mt-2 px-8 py-3 rounded-full font-semibold text-lg transition-all flex items-center justify-center gap-2 ${
+                isAnalyzing 
+                  ? 'bg-primary/50 text-white/50 cursor-wait' 
+                  : 'bg-gradient-to-r from-primary to-[#FFB300] text-[#320047] hover:shadow-[0_0_20px_rgba(194,24,91,0.3)] hover:scale-[1.02]'
+              }`}
+            >
+              {isAnalyzing ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white/50 border-t-transparent rounded-full animate-spin"></div>
+                  Analyzing with AI...
+                </>
+              ) : (
+                <>
+                  <span className="material-symbols-outlined">auto_awesome</span>
+                  Analyze My Skills
+                </>
+              )}
             </button>
-          </div>
-          <div className="relative pt-8 pb-4 overflow-x-auto">
-            {/* Connector Line */}
-            <div className="absolute top-[42px] left-8 right-8 h-[2px] border-t-2 border-dotted border-white/20 -z-10 min-w-[600px]"></div>
-            
-            <div className="flex justify-between min-w-[600px] relative">
-              {/* Day 1: Completed */}
-              <div className="flex flex-col items-center gap-3 group w-24">
-                <div className="w-8 h-8 rounded-full bg-success-emerald text-white flex items-center justify-center shadow-md relative z-10">
-                  <span className="material-symbols-outlined text-[16px]">check</span>
-                </div>
-                <div className="text-center">
-                  <p className="font-label-sm text-label-sm text-on-surface-variant">DAY 1</p>
-                  <p className="text-sm font-medium mt-1">Figma Updates</p>
-                </div>
-              </div>
-              
-              {/* Day 2: Completed */}
-              <div className="flex flex-col items-center gap-3 group w-24">
-                <div className="w-8 h-8 rounded-full bg-success-emerald text-white flex items-center justify-center shadow-md relative z-10">
-                  <span className="material-symbols-outlined text-[16px]">check</span>
-                </div>
-                <div className="text-center">
-                  <p className="font-label-sm text-label-sm text-on-surface-variant">DAY 2</p>
-                  <p className="text-sm font-medium mt-1">Variables</p>
-                </div>
-              </div>
-              
-              {/* Day 3: Current */}
-              <div className="flex flex-col items-center gap-3 group w-32 cursor-pointer relative">
-                <div className="absolute top-12 w-48 bg-glass-overlay backdrop-blur-md rounded-xl p-3 shadow-xl border border-glass-border opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto z-20 translate-y-2 group-hover:translate-y-0 duration-200">
-                  <p className="text-xs text-[#FFB300] font-bold mb-1">CURRENT MODULE</p>
-                  <p className="text-sm font-medium mb-2 text-on-surface">Intro to AI for UX</p>
-                  <button className="w-full bg-[#FFB300] text-[#320047] font-semibold text-xs py-1.5 rounded-lg flex items-center justify-center gap-1">
-                    <span className="material-symbols-outlined text-[14px]">play_circle</span> Start Video
-                  </button>
-                </div>
-                <div className="w-10 h-10 rounded-full bg-[#FFB300] text-[#320047] flex items-center justify-center animate-pulse-amber relative z-10 font-bold">
-                  <span className="text-xl">✦</span>
-                </div>
-                <div className="text-center">
-                  <p className="font-label-sm text-label-sm text-[#FFB300] font-bold">DAY 3 (TODAY)</p>
-                  <p className="text-sm font-medium mt-1">AI Tools Intro</p>
-                </div>
-              </div>
-              
-              {/* Day 4: Future */}
-              <div className="flex flex-col items-center gap-3 group w-24">
-                <div className="w-8 h-8 rounded-full bg-white/10 text-on-surface-variant flex items-center justify-center relative z-10">
-                  <span className="text-lg">✦</span>
-                </div>
-                <div className="text-center opacity-50">
-                  <p className="font-label-sm text-label-sm">DAY 4</p>
-                  <p className="text-sm mt-1">AI Prompts</p>
-                </div>
-              </div>
+          )}
+          
+          {error && (
+            <div className="mt-2 p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm flex items-center gap-2">
+              <span className="material-symbols-outlined text-lg">error</span>
+              {error}
+            </div>
+          )}
+        </section>
 
-              {/* Day 5: Future */}
-              <div className="flex flex-col items-center gap-3 group w-24">
-                <div className="w-8 h-8 rounded-full bg-white/10 text-on-surface-variant flex items-center justify-center relative z-10">
-                  <span className="text-lg">✦</span>
+        {/* STEP 2: Results — only show when we have analysis */}
+        {analysisResult && (
+          <section className="flex flex-col gap-6 animate-slide-up">
+            <h3 className="font-headline-md text-headline-md font-medium flex items-center gap-2">
+              <span className="w-8 h-8 rounded-full bg-primary-container/20 text-primary flex items-center justify-center text-sm font-bold border border-primary/30">2</span>
+              Skill Mapping
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Column 1: Bucket 1 (green) */}
+              <div className="glass-panel rounded-2xl p-6 flex flex-col gap-4 border-t-4 border-t-success-emerald">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-success-emerald">{config.bucket1Icon}</span>
+                  <h4 className="font-bold text-success-emerald">{analysisResult.labels?.bucket1 || config.bucket1Label}</h4>
                 </div>
-                <div className="text-center opacity-50">
-                  <p className="font-label-sm text-label-sm">DAY 5</p>
-                  <p className="text-sm mt-1">Project</p>
+                <p className="text-sm text-on-surface-variant">{config.bucket1Desc}</p>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {(analysisResult.bucket1 || []).map((skill, i) => (
+                    <span key={skill} className={`px-3 py-1.5 bg-success-emerald/10 text-success-emerald border border-success-emerald/20 rounded-lg text-sm animate-slide-up stagger-${(i % 5) + 1}`}>{skill}</span>
+                  ))}
+                  {(analysisResult.bucket1 || []).length === 0 && (
+                    <span className="text-sm text-on-surface-variant/50 italic">None identified</span>
+                  )}
+                </div>
+              </div>
+              
+              {/* Column 2: Bucket 2 (amber) */}
+              <div className="glass-panel rounded-2xl p-6 flex flex-col gap-4 border-t-4 border-t-[#FFB300]">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[#FFB300]">{config.bucket2Icon}</span>
+                  <h4 className="font-bold text-[#FFB300]">{analysisResult.labels?.bucket2 || config.bucket2Label}</h4>
+                </div>
+                <p className="text-sm text-on-surface-variant">{config.bucket2Desc}</p>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {(analysisResult.bucket2 || []).map((skill, i) => (
+                    <span key={skill} className={`px-3 py-1.5 bg-[#FFB300]/10 text-[#FFB300] border border-[#FFB300]/30 rounded-lg text-sm animate-slide-up stagger-${(i % 5) + 1}`}>{skill}</span>
+                  ))}
+                  {(analysisResult.bucket2 || []).length === 0 && (
+                    <span className="text-sm text-on-surface-variant/50 italic">None identified</span>
+                  )}
+                </div>
+              </div>
+              
+              {/* Column 3: Bucket 3 (pink/primary) */}
+              <div className="glass-panel rounded-2xl p-6 flex flex-col gap-4 border-t-4 border-t-primary">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary">{config.bucket3Icon}</span>
+                  <h4 className="font-bold text-primary">{analysisResult.labels?.bucket3 || config.bucket3Label}</h4>
+                </div>
+                <p className="text-sm text-on-surface-variant">{config.bucket3Desc}</p>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {(analysisResult.bucket3 || []).map((skill, i) => (
+                    <span key={skill} className={`px-3 py-1.5 bg-primary/10 text-primary border border-primary/20 rounded-lg text-sm animate-slide-up stagger-${(i % 5) + 1}`}>{skill}</span>
+                  ))}
+                  {(analysisResult.bucket3 || []).length === 0 && (
+                    <span className="text-sm text-on-surface-variant/50 italic">None identified</span>
+                  )}
                 </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
+
+        {/* Timeline — only show when we have analysis */}
+        {analysisResult && analysisResult.seven_day_plan && analysisResult.seven_day_plan.length > 0 && (
+          <section className="glass-panel rounded-2xl p-8 mb-10 animate-slide-up">
+            <div className="flex justify-between items-center mb-8">
+              <h3 className="font-headline-md text-headline-md font-medium">{analysisResult.labels?.planTitle || config.planTitle}</h3>
+              <button className="text-primary font-medium flex items-center gap-1 hover:underline text-sm">
+                  View Full Path <span className="material-symbols-outlined text-sm">arrow_forward</span>
+              </button>
+            </div>
+            <div className="relative pt-8 pb-4 overflow-x-auto">
+              {/* Connector Line */}
+              <div className="absolute top-[42px] left-8 right-8 h-[2px] border-t-2 border-dotted border-white/20 -z-10 min-w-[600px]"></div>
+              
+              <div className="flex justify-between min-w-[600px] relative">
+                {analysisResult.seven_day_plan.slice(0, 7).map((dayItem, index) => {
+                  const isFirst = index === 0;
+                  const isCurrent = index === 0; // First day is "today"
+                  const isFuture = index > 0;
+                  
+                  return (
+                    <div key={index} className={`flex flex-col items-center gap-3 group ${isCurrent ? 'w-32 cursor-pointer relative' : 'w-24'}`}>
+                      {/* Day indicator dot */}
+                      {isCurrent ? (
+                        <>
+                          <div className="absolute top-12 w-48 bg-glass-overlay backdrop-blur-md rounded-xl p-3 shadow-xl border border-glass-border opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto z-20 translate-y-2 group-hover:translate-y-0 duration-200">
+                            <p className="text-xs text-[#FFB300] font-bold mb-1">START HERE</p>
+                            <p className="text-sm font-medium mb-2 text-on-surface">{dayItem.skill}</p>
+                            {dayItem.resource_link && (
+                              <a href={`https://www.google.com/search?q=${encodeURIComponent(dayItem.resource_link)}`} target="_blank" rel="noopener noreferrer" className="w-full bg-[#FFB300] text-[#320047] font-semibold text-xs py-1.5 rounded-lg flex items-center justify-center gap-1">
+                                <span className="material-symbols-outlined text-[14px]">search</span> Find Course
+                              </a>
+                            )}
+                          </div>
+                          <div className="w-10 h-10 rounded-full bg-[#FFB300] text-[#320047] flex items-center justify-center animate-pulse-amber relative z-10 font-bold">
+                            <span className="text-xl">✦</span>
+                          </div>
+                          <div className="text-center">
+                            <p className="font-label-sm text-label-sm text-[#FFB300] font-bold">DAY {dayItem.day} (TODAY)</p>
+                            <p className="text-sm font-medium mt-1 max-w-[120px] truncate">{dayItem.skill}</p>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="w-8 h-8 rounded-full bg-white/10 text-on-surface-variant flex items-center justify-center relative z-10">
+                            <span className="text-lg">✦</span>
+                          </div>
+                          <div className={`text-center ${isFuture ? 'opacity-50' : ''}`}>
+                            <p className="font-label-sm text-label-sm">DAY {dayItem.day}</p>
+                            <p className="text-sm mt-1 max-w-[96px] truncate">{dayItem.skill}</p>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Static placeholder when no analysis yet */}
+        {!analysisResult && !isAnalyzing && (
+          <>
+            {/* STEP 2: Static Results Preview */}
+            <section className="flex flex-col gap-6">
+              <h3 className="font-headline-md text-headline-md font-medium flex items-center gap-2">
+                <span className="w-8 h-8 rounded-full bg-primary-container/20 text-primary flex items-center justify-center text-sm font-bold border border-primary/30">2</span>
+                Skill Mapping
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Column 1 */}
+                <div className="glass-panel rounded-2xl p-6 flex flex-col gap-4 border-t-4 border-t-success-emerald">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-success-emerald">{config.bucket1Icon}</span>
+                    <h4 className="font-bold text-success-emerald">{config.bucket1Label}</h4>
+                  </div>
+                  <p className="text-sm text-on-surface-variant">{config.bucket1Desc}</p>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    <span className="px-3 py-1.5 bg-success-emerald/10 text-success-emerald border border-success-emerald/20 rounded-lg text-sm animate-slide-up stagger-1">Figma</span>
+                    <span className="px-3 py-1.5 bg-success-emerald/10 text-success-emerald border border-success-emerald/20 rounded-lg text-sm animate-slide-up stagger-2">User Research</span>
+                    <span className="px-3 py-1.5 bg-success-emerald/10 text-success-emerald border border-success-emerald/20 rounded-lg text-sm animate-slide-up stagger-3">Prototyping</span>
+                  </div>
+                </div>
+                
+                {/* Column 2 */}
+                <div className="glass-panel rounded-2xl p-6 flex flex-col gap-4 border-t-4 border-t-[#FFB300]">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[#FFB300]">{config.bucket2Icon}</span>
+                    <h4 className="font-bold text-[#FFB300]">{config.bucket2Label}</h4>
+                  </div>
+                  <p className="text-sm text-on-surface-variant">{config.bucket2Desc}</p>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    <span className="px-3 py-1.5 bg-[#FFB300]/10 text-[#FFB300] border border-[#FFB300]/30 rounded-lg text-sm animate-slide-up stagger-2 flex items-center gap-1">
+                        WCAG 2.1 <span className="material-symbols-outlined text-[14px]">arrow_right_alt</span> 2.2
+                    </span>
+                    <span className="px-3 py-1.5 bg-[#FFB300]/10 text-[#FFB300] border border-[#FFB300]/30 rounded-lg text-sm animate-slide-up stagger-3">Design Systems</span>
+                  </div>
+                </div>
+                
+                {/* Column 3 */}
+                <div className="glass-panel rounded-2xl p-6 flex flex-col gap-4 border-t-4 border-t-primary">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-primary">{config.bucket3Icon}</span>
+                    <h4 className="font-bold text-primary">{config.bucket3Label}</h4>
+                  </div>
+                  <p className="text-sm text-on-surface-variant">{config.bucket3Desc}</p>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    <span className="px-3 py-1.5 bg-primary/10 text-primary border border-primary/20 rounded-lg text-sm animate-slide-up stagger-3">Generative AI Tools</span>
+                    <span className="px-3 py-1.5 bg-primary/10 text-primary border border-primary/20 rounded-lg text-sm animate-slide-up stagger-4">Figma Variables</span>
+                    <span className="px-3 py-1.5 bg-primary/10 text-primary border border-primary/20 rounded-lg text-sm animate-slide-up stagger-5">Spatial UI</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Static Timeline Preview */}
+            <section className="glass-panel rounded-2xl p-8 mb-10">
+              <div className="flex justify-between items-center mb-8">
+                <h3 className="font-headline-md text-headline-md font-medium">{config.planTitle}</h3>
+                <button className="text-primary font-medium flex items-center gap-1 hover:underline text-sm">
+                    View Full Path <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                </button>
+              </div>
+              <div className="relative pt-8 pb-4 overflow-x-auto">
+                <div className="absolute top-[42px] left-8 right-8 h-[2px] border-t-2 border-dotted border-white/20 -z-10 min-w-[600px]"></div>
+                
+                <div className="flex justify-between min-w-[600px] relative">
+                  {/* Day 1: Completed */}
+                  <div className="flex flex-col items-center gap-3 group w-24">
+                    <div className="w-8 h-8 rounded-full bg-success-emerald text-white flex items-center justify-center shadow-md relative z-10">
+                      <span className="material-symbols-outlined text-[16px]">check</span>
+                    </div>
+                    <div className="text-center">
+                      <p className="font-label-sm text-label-sm text-on-surface-variant">DAY 1</p>
+                      <p className="text-sm font-medium mt-1">Figma Updates</p>
+                    </div>
+                  </div>
+                  
+                  {/* Day 2: Completed */}
+                  <div className="flex flex-col items-center gap-3 group w-24">
+                    <div className="w-8 h-8 rounded-full bg-success-emerald text-white flex items-center justify-center shadow-md relative z-10">
+                      <span className="material-symbols-outlined text-[16px]">check</span>
+                    </div>
+                    <div className="text-center">
+                      <p className="font-label-sm text-label-sm text-on-surface-variant">DAY 2</p>
+                      <p className="text-sm font-medium mt-1">Variables</p>
+                    </div>
+                  </div>
+                  
+                  {/* Day 3: Current */}
+                  <div className="flex flex-col items-center gap-3 group w-32 cursor-pointer relative">
+                    <div className="absolute top-12 w-48 bg-glass-overlay backdrop-blur-md rounded-xl p-3 shadow-xl border border-glass-border opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto z-20 translate-y-2 group-hover:translate-y-0 duration-200">
+                      <p className="text-xs text-[#FFB300] font-bold mb-1">CURRENT MODULE</p>
+                      <p className="text-sm font-medium mb-2 text-on-surface">Intro to AI for UX</p>
+                      <button className="w-full bg-[#FFB300] text-[#320047] font-semibold text-xs py-1.5 rounded-lg flex items-center justify-center gap-1">
+                        <span className="material-symbols-outlined text-[14px]">play_circle</span> Start Video
+                      </button>
+                    </div>
+                    <div className="w-10 h-10 rounded-full bg-[#FFB300] text-[#320047] flex items-center justify-center animate-pulse-amber relative z-10 font-bold">
+                      <span className="text-xl">✦</span>
+                    </div>
+                    <div className="text-center">
+                      <p className="font-label-sm text-label-sm text-[#FFB300] font-bold">DAY 3 (TODAY)</p>
+                      <p className="text-sm font-medium mt-1">AI Tools Intro</p>
+                    </div>
+                  </div>
+                  
+                  {/* Day 4: Future */}
+                  <div className="flex flex-col items-center gap-3 group w-24">
+                    <div className="w-8 h-8 rounded-full bg-white/10 text-on-surface-variant flex items-center justify-center relative z-10">
+                      <span className="text-lg">✦</span>
+                    </div>
+                    <div className="text-center opacity-50">
+                      <p className="font-label-sm text-label-sm">DAY 4</p>
+                      <p className="text-sm mt-1">AI Prompts</p>
+                    </div>
+                  </div>
+
+                  {/* Day 5: Future */}
+                  <div className="flex flex-col items-center gap-3 group w-24">
+                    <div className="w-8 h-8 rounded-full bg-white/10 text-on-surface-variant flex items-center justify-center relative z-10">
+                      <span className="text-lg">✦</span>
+                    </div>
+                    <div className="text-center opacity-50">
+                      <p className="font-label-sm text-label-sm">DAY 5</p>
+                      <p className="text-sm mt-1">Project</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </>
+        )}
 
       </main>
     </div>

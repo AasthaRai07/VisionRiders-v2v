@@ -10,6 +10,20 @@ const verifyUserAccess = (req, res, next) => {
   next();
 };
 
+// Get user profile (includes persona for Skill Gap page)
+router.get('/:userId/profile', verifyUserAccess, async (req, res) => {
+  try {
+    const doc = await admin.firestore().collection('users').doc(req.params.userId).get();
+    if (!doc.exists) {
+      return res.json({ profile: null });
+    }
+    res.json({ profile: { id: doc.id, ...doc.data() } });
+  } catch (error) {
+    console.error("Error fetching user profile:", error);
+    res.status(500).json({ error: "Failed to fetch user profile" });
+  }
+});
+
 router.post('/:userId/userProgress', verifyUserAccess, async (req, res) => {
   try {
     const { courseId, currentModule, totalModules } = req.body;

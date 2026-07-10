@@ -71,6 +71,105 @@ async function seedCourses() {
     await insertBatch.commit();
     console.log(`Successfully re-seeded ${courses.length} courses with thumbnails and URLs.`);
     
+    // ── Seed Mock User Profiles ───────────────────────────────────────────
+    const mockUsers = [
+      { id: 'demo-user-123', name: 'Demo User (Returnship)', persona: 'returnship' },
+      { id: 'demo-student', name: 'Student User', persona: 'student' },
+      { id: 'demo-fresher', name: 'Fresher User', persona: 'fresher' },
+      { id: 'demo-professional', name: 'Pro User', persona: 'professional' },
+    ];
+    
+    const userBatch = db.batch();
+    mockUsers.forEach(user => {
+      const docRef = db.collection('users').doc(user.id);
+      userBatch.set(docRef, {
+        name: user.name,
+        persona: user.persona,
+        email: `${user.id}@hernova.test`,
+        createdAt: admin.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+    });
+    
+    await userBatch.commit();
+    console.log(`Seeded ${mockUsers.length} mock user profiles.`);
+    
+    // ── Seed Target Roles ────────────────────────────────────────────────
+    const targetRoles = [
+      // Software & Engineering
+      { roleName: "Software Engineer", industry: "Software & Engineering", aliases: ["SWE", "Software Developer"] },
+      { roleName: "Backend Developer", industry: "Software & Engineering", aliases: ["Backend Engineer"] },
+      { roleName: "Frontend Developer", industry: "Software & Engineering", aliases: ["Frontend Engineer", "UI Developer"] },
+      { roleName: "Full-Stack Developer", industry: "Software & Engineering", aliases: ["Full Stack Engineer"] },
+      { roleName: "Mobile App Developer", industry: "Software & Engineering", aliases: ["iOS Developer", "Android Developer"] },
+      { roleName: "DevOps Engineer", industry: "Software & Engineering", aliases: ["DevOps"] },
+      { roleName: "Site Reliability Engineer", industry: "Software & Engineering", aliases: ["SRE"] },
+      { roleName: "QA/Test Engineer", industry: "Software & Engineering", aliases: ["QA Engineer", "Test Engineer", "SDET"] },
+      { roleName: "Embedded Systems Engineer", industry: "Software & Engineering", aliases: ["Embedded Engineer"] },
+      { roleName: "Cloud Engineer", industry: "Software & Engineering", aliases: ["Cloud Architect (Jr)"] },
+      // Data & AI
+      { roleName: "Data Scientist", industry: "Data & AI", aliases: [] },
+      { roleName: "Data Analyst", industry: "Data & AI", aliases: [] },
+      { roleName: "Data Engineer", industry: "Data & AI", aliases: [] },
+      { roleName: "Machine Learning Engineer", industry: "Data & AI", aliases: ["ML Engineer"] },
+      { roleName: "AI Research Scientist", industry: "Data & AI", aliases: ["AI Researcher"] },
+      { roleName: "Business Intelligence Analyst", industry: "Data & AI", aliases: ["BI Analyst"] },
+      { roleName: "Database Administrator", industry: "Data & AI", aliases: ["DBA"] },
+      // Design & Product
+      { roleName: "UX Designer", industry: "Design & Product", aliases: ["User Experience Designer"] },
+      { roleName: "UI Designer", industry: "Design & Product", aliases: ["User Interface Designer"] },
+      { roleName: "Product Manager (Technical)", industry: "Design & Product", aliases: ["Technical PM"] },
+      { roleName: "Product Manager", industry: "Design & Product", aliases: ["PM"] },
+      // Core Engineering
+      { roleName: "Mechanical Engineer", industry: "Core Engineering", aliases: [] },
+      { roleName: "Electrical Engineer", industry: "Core Engineering", aliases: [] },
+      { roleName: "Civil Engineer", industry: "Core Engineering", aliases: [] },
+      { roleName: "Chemical Engineer", industry: "Core Engineering", aliases: [] },
+      { roleName: "Aerospace Engineer", industry: "Core Engineering", aliases: [] },
+      { roleName: "Industrial Engineer", industry: "Core Engineering", aliases: [] },
+      { roleName: "Environmental Engineer", industry: "Core Engineering", aliases: [] },
+      { roleName: "Robotics Engineer", industry: "Core Engineering", aliases: [] },
+      { roleName: "Biomedical Engineer", industry: "Core Engineering", aliases: [] },
+      // Life Sciences
+      { roleName: "Research Scientist (Biotech/Pharma)", industry: "Life Sciences", aliases: ["Research Scientist"] },
+      { roleName: "Lab Technician", industry: "Life Sciences", aliases: [] },
+      { roleName: "Clinical Research Associate", industry: "Life Sciences", aliases: ["CRA"] },
+      { roleName: "Bioinformatics Analyst", industry: "Life Sciences", aliases: [] },
+      { roleName: "Genetic Counselor", industry: "Life Sciences", aliases: [] },
+      { roleName: "Quality Control Analyst (Pharma/Biotech)", industry: "Life Sciences", aliases: ["QC Analyst"] },
+      // Math & Analytics
+      { roleName: "Statistician", industry: "Math & Analytics", aliases: [] },
+      { roleName: "Actuary", industry: "Math & Analytics", aliases: [] },
+      { roleName: "Operations Research Analyst", industry: "Math & Analytics", aliases: ["OR Analyst"] },
+      { roleName: "Quantitative Analyst", industry: "Math & Analytics", aliases: ["Quant"] },
+      // IT & Security
+      { roleName: "IT Support/Systems Administrator", industry: "IT & Security", aliases: ["Sysadmin", "IT Support"] },
+      { roleName: "Network Engineer", industry: "IT & Security", aliases: [] },
+      { roleName: "Cybersecurity Analyst", industry: "IT & Security", aliases: ["Security Analyst"] },
+      { roleName: "Information Security Specialist", industry: "IT & Security", aliases: ["InfoSec Specialist"] },
+      // Cross-Disciplinary
+      { roleName: "Product Data Analyst", industry: "Cross-Disciplinary", aliases: [] },
+      { roleName: "Technical Program Manager", industry: "Cross-Disciplinary", aliases: ["TPM"] },
+      { roleName: "Solutions Architect", industry: "Cross-Disciplinary", aliases: [] },
+      { roleName: "R&D Specialist", industry: "Cross-Disciplinary", aliases: ["Research & Development Specialist"] }
+    ];
+
+    const rolesSnap = await db.collection('targetRoles').get();
+    const rolesDeleteBatch = db.batch();
+    rolesSnap.forEach(doc => rolesDeleteBatch.delete(doc.ref));
+    await rolesDeleteBatch.commit();
+    console.log("Deleted old targetRoles.");
+
+    const rolesInsertBatch = db.batch();
+    // Use roleName as document ID to naturally deduplicate (lowercase + remove spaces)
+    targetRoles.forEach(role => {
+      const docId = role.roleName.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const docRef = db.collection('targetRoles').doc(docId);
+      rolesInsertBatch.set(docRef, role, { merge: true });
+    });
+    
+    await rolesInsertBatch.commit();
+    console.log(`Seeded targetRoles.`);
+
     process.exit(0);
   } catch (error) {
     console.error("Error during wipe and re-seed:", error);
@@ -79,3 +178,4 @@ async function seedCourses() {
 }
 
 seedCourses();
+

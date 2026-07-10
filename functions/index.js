@@ -22,7 +22,7 @@ app.use(express.json());
 // Authentication middleware
 const authenticate = async (req, res, next) => {
   // Allow unauthenticated access to specific paths if needed, e.g., GET /courses, GET /mentors, GET /jobs, GET /community, GET /search
-  const publicPaths = ['/courses', '/mentors', '/jobs', '/community/posts', '/search'];
+  const publicPaths = ['/courses', '/mentors', '/jobs', '/community/posts', '/search', '/skill-gap/labels', '/skill-gap/roles'];
   if (req.method === 'GET' && publicPaths.some(p => req.path.startsWith(p))) {
     return next();
   }
