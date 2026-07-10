@@ -373,27 +373,30 @@ export default function JobsBoard() {
         <div className="flex border-b border-glass-border mb-8 gap-6 text-sm font-semibold">
           <button 
             onClick={() => setActiveTab('analytics')} 
-            className={`pb-3 px-1 transition-all border-b-2 ${activeTab === 'analytics' ? 'border-[#C2185B] text-primary' : 'border-transparent text-on-surface-variant'}`}
+            className={`pb-3 px-1 transition-all border-b-2 inline-flex items-center gap-1.5 ${activeTab === 'analytics' ? 'border-[#C2185B] text-primary' : 'border-transparent text-on-surface-variant'}`}
           >
-            Career Analytics &amp; Insights 📊
+            <span>Career Analytics &amp; Insights</span>
+            <span className="text-base leading-none">📊</span>
           </button>
           <button 
             onClick={() => setActiveTab('feed')} 
-            className={`pb-3 px-1 transition-all border-b-2 ${activeTab === 'feed' ? 'border-[#C2185B] text-primary' : 'border-transparent text-on-surface-variant'}`}
+            className={`pb-3 px-1 transition-all border-b-2 inline-flex items-center gap-1.5 ${activeTab === 'feed' ? 'border-[#C2185B] text-primary' : 'border-transparent text-on-surface-variant'}`}
           >
-            Recommended Jobs
+            <span>Recommended Jobs</span>
           </button>
           <button 
             onClick={() => setActiveTab('returnships')} 
-            className={`pb-3 px-1 transition-all border-b-2 ${activeTab === 'returnships' ? 'border-[#C2185B] text-primary' : 'border-transparent text-on-surface-variant'}`}
+            className={`pb-3 px-1 transition-all border-b-2 inline-flex items-center gap-1.5 ${activeTab === 'returnships' ? 'border-[#C2185B] text-primary' : 'border-transparent text-on-surface-variant'}`}
           >
-            Returnship Hub 🔄
+            <span>Returnship Hub</span>
+            <span className="text-base leading-none">🔄</span>
           </button>
           <button 
             onClick={() => setActiveTab('tracker')} 
-            className={`pb-3 px-1 transition-all border-b-2 ${activeTab === 'tracker' ? 'border-[#C2185B] text-primary' : 'border-transparent text-on-surface-variant'}`}
+            className={`pb-3 px-1 transition-all border-b-2 inline-flex items-center gap-1.5 ${activeTab === 'tracker' ? 'border-[#C2185B] text-primary' : 'border-transparent text-on-surface-variant'}`}
           >
-            Application Tracker 📋
+            <span>Application Tracker</span>
+            <span className="text-base leading-none">📋</span>
           </button>
         </div>
 

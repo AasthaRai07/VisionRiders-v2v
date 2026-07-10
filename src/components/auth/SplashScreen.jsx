@@ -100,7 +100,7 @@ export default function SplashScreen() {
           variants={containerVariants}
           initial="initial"
           animate="animate"
-          className="flex flex-wrap justify-center gap-x-2 gap-y-1 text-[11px] sm:text-[13px] text-[#D4537E] font-black uppercase tracking-[0.25em] mt-3"
+          className="flex flex-wrap justify-center gap-x-2 gap-y-1 text-[16px] sm:text-[20px] text-[#D4537E] font-black uppercase tracking-[0.25em] mt-3"
         >
           {taglineWords.map((word, idx) => (
             <motion.span 
