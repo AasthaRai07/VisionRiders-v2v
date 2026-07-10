@@ -14,6 +14,7 @@ const communityRoutes = require("./src/routes/community");
 const skillGapRoutes = require("./src/routes/skillGap");
 const interviewsRoutes = require("./src/routes/interviews");
 const searchRoutes = require("./src/routes/search");
+const financeRoutes = require("./src/routes/finance");
 
 const app = express();
 app.use(cors({ origin: true }));
@@ -22,11 +23,11 @@ app.use(express.json());
 // Authentication middleware
 const authenticate = async (req, res, next) => {
   // Public paths that allow unauthenticated access
-  const publicPaths = ['/courses', '/mentors', '/jobs', '/community/posts', '/search', '/skill-gap/labels', '/skill-gap/roles'];
+  const publicPaths = ['/courses', '/mentors', '/jobs', '/community/posts', '/search', '/skill-gap/labels', '/skill-gap/roles', '/finance'];
   const isPublicGet = req.method === 'GET' && publicPaths.some(p => req.path.startsWith(p));
   const isPublicPost = req.method === 'POST' && req.path === '/jobs/parse-resume';
 
-  if (isPublicPost) {
+  if (isPublicPost || req.path.startsWith('/finance')) {
     return next();
   }
   // Whitelist demo user for development
@@ -81,6 +82,7 @@ app.use("/community", communityRoutes);
 app.use("/skill-gap", skillGapRoutes);
 app.use("/interview", interviewsRoutes);
 app.use("/search", searchRoutes);
+app.use("/finance", financeRoutes);
 
 // Export the express app as a Firebase HTTP Cloud Function
 exports.api = onRequest({ maxInstances: 10, cors: true }, app);
