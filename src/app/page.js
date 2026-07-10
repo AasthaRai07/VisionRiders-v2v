@@ -1,100 +1,99 @@
-import React from 'react';
+'use client';
 
-export default function Home() {
-  return (
-    <main className="container" style={{ paddingTop: '80px', paddingBottom: '80px' }}>
-      {/* Hero Section */}
-      <section style={{ textAlign: 'center', marginBottom: '64px' }}>
-        <h1 className="headline headline-lg" style={{ marginBottom: '16px', color: 'var(--primary)' }}>
-          PDF to Website Generator
-        </h1>
-        <p className="body-lg" style={{ color: 'var(--on-surface-variant)', maxWidth: '600px', margin: '0 auto 32px' }}>
-          Instantly transform your static educational materials and financial literacy guides into beautiful, interactive, glassmorphic websites.
-        </p>
-        <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
-          <button className="btn btn-primary">
-            Get Started <span style={{ fontSize: '18px' }}>✦</span>
-          </button>
-          <button className="btn btn-glass">
-            Watch Demo
-          </button>
-        </div>
-      </section>
+import { useEffect } from 'react';
+import Link from 'next/link';
 
-      {/* Main Glass Panel */}
-      <section className="glass-panel" style={{ padding: '40px', marginBottom: '64px' }}>
-        <h2 className="headline headline-md" style={{ marginBottom: '24px' }}>How it Works</h2>
+export default function LandingPage() {
+  useEffect(() => {
+    const container = document.getElementById('particles');
+    if (!container) return;
+    
+    // Clear existing particles in case of fast refresh
+    container.innerHTML = '';
+    
+    const numParticles = 20;
+    for (let i = 0; i < numParticles; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
         
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '32px' }}>
-          {/* Step 1 */}
-          <div>
-            <div className="label-sm" style={{ color: 'var(--secondary)', marginBottom: '8px' }}>Step 01</div>
-            <h3 className="headline" style={{ fontSize: '20px', marginBottom: '12px' }}>Upload Your PDF</h3>
-            <p className="body-md" style={{ color: 'var(--on-surface-variant)', marginBottom: '16px' }}>
-              Upload your documents securely. Our system supports various formats tailored for educational content.
-            </p>
-            <input type="text" className="input-glass" placeholder="Paste a document URL instead..." />
-          </div>
+        // Randomize positions, durations, and delays
+        const left = Math.random() * 100;
+        const duration = 10 + Math.random() * 20; // 10s to 30s
+        const delay = Math.random() * 10;
+        
+        particle.style.left = `${left}vw`;
+        particle.style.animationDuration = `${duration}s, 3s`;
+        particle.style.animationDelay = `${delay}s, 0s`;
+        
+        // Random opacity for depth
+        particle.style.opacity = (0.2 + Math.random() * 0.5).toString();
+        
+        container.appendChild(particle);
+    }
+  }, []);
 
-          {/* Step 2 */}
-          <div>
-            <div className="label-sm" style={{ color: 'var(--secondary)', marginBottom: '8px' }}>Step 02</div>
-            <h3 className="headline" style={{ fontSize: '20px', marginBottom: '12px' }}>Apply HerNova Design</h3>
-            <p className="body-md" style={{ color: 'var(--on-surface-variant)' }}>
-              We automatically apply the quiet luminance aesthetic—bringing frosted glass panels, deep magenta accents, and beautiful typography to your content.
-            </p>
+  return (
+    <div className="relative text-on-surface flex-grow flex flex-col min-h-screen">
+      {/* Animated Particles Layer */}
+      <div className="particle-container" id="particles"></div>
+      
+      {/* Main Content Canvas */}
+      <main className="relative z-10 flex-grow flex flex-col items-center justify-center px-margin-mobile md:px-margin-desktop py-stack-xl min-h-screen">
+        {/* Hero Section */}
+        <section className="flex flex-col items-center justify-center text-center max-w-[800px] mx-auto w-full mb-stack-xl">
+          {/* Logo Lockup */}
+          <div className="glass-panel rounded-full px-8 py-6 mb-stack-md flex items-center justify-center shadow-sm">
+            <h1 className="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary tracking-tight flex items-baseline">
+              HerNova<span className="text-tertiary-fixed-dim text-lg md:text-2xl ml-1 -translate-y-2">✦</span>
+            </h1>
           </div>
+          {/* Tagline */}
+          <p className="font-body-lg text-body-lg text-on-surface-variant italic mb-stack-lg max-w-[600px] leading-relaxed">
+            Igniting the next generation of women leaders.
+          </p>
+          {/* CTA Button */}
+          <Link href="/dashboard" className="bg-[#FFB300] text-[#281526] font-label-sm text-label-sm py-4 px-10 rounded-full cta-glow flex items-center gap-2 hover:scale-105 transition-transform duration-300">
+            Get Started
+            <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+          </Link>
+        </section>
 
-          {/* Step 3 */}
-          <div>
-            <div className="label-sm" style={{ color: 'var(--secondary)', marginBottom: '8px' }}>Step 03</div>
-            <h3 className="headline" style={{ fontSize: '20px', marginBottom: '12px' }}>Publish & Empower</h3>
-            <p className="body-md" style={{ color: 'var(--on-surface-variant)', marginBottom: '16px' }}>
-              Your new interactive platform is ready to inspire and educate women everywhere.
-            </p>
-            <button className="btn btn-accent" style={{ width: '100%' }}>
-              Publish Now
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* FinHer Widget Preview */}
-      <section style={{ display: 'flex', justifyContent: 'center' }}>
-        <div className="glass-panel" style={{ padding: '32px', display: 'flex', alignItems: 'center', gap: '24px', maxWidth: '400px', width: '100%' }}>
-          {/* Mock Score Ring */}
-          <div style={{ 
-            width: '80px', 
-            height: '80px', 
-            borderRadius: '50%', 
-            background: 'conic-gradient(var(--accent-golden) 75%, var(--inverse-surface) 0)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            <div style={{ 
-              width: '64px', 
-              height: '64px', 
-              borderRadius: '50%', 
-              background: 'var(--surface-bright)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontFamily: 'var(--font-epilogue)',
-              fontWeight: '600',
-              fontSize: '20px'
-            }}>
-              75
+        {/* Pillars Section */}
+        <section className="w-full max-w-container-max mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+            {/* Pillar 1: Learn */}
+            <div className="glass-panel rounded-xl p-6 flex flex-col items-center text-center hover:-translate-y-2 transition-transform duration-300">
+              <div className="w-16 h-16 rounded-full bg-surface-container flex items-center justify-center mb-4 text-primary">
+                <span className="material-symbols-outlined text-[32px]">school</span>
+              </div>
+              <h3 className="font-headline-md text-headline-md text-on-surface mb-2">Learn</h3>
+              <p className="font-body-md text-body-md text-on-surface-variant opacity-80">
+                Master essential skills through curated educational tracks.
+              </p>
+            </div>
+            {/* Pillar 2: Earn */}
+            <div className="glass-panel rounded-xl p-6 flex flex-col items-center text-center hover:-translate-y-2 transition-transform duration-300">
+              <div className="w-16 h-16 rounded-full bg-surface-container flex items-center justify-center mb-4 text-secondary">
+                <span className="material-symbols-outlined text-[32px]">show_chart</span>
+              </div>
+              <h3 className="font-headline-md text-headline-md text-on-surface mb-2">Earn</h3>
+              <p className="font-body-md text-body-md text-on-surface-variant opacity-80">
+                Unlock financial independence and career advancement.
+              </p>
+            </div>
+            {/* Pillar 3: Grow */}
+            <div className="glass-panel rounded-xl p-6 flex flex-col items-center text-center hover:-translate-y-2 transition-transform duration-300">
+              <div className="w-16 h-16 rounded-full bg-surface-container flex items-center justify-center mb-4 text-tertiary-container">
+                <span className="material-symbols-outlined text-[32px]">explore</span>
+              </div>
+              <h3 className="font-headline-md text-headline-md text-on-surface mb-2">Grow</h3>
+              <p className="font-body-md text-body-md text-on-surface-variant opacity-80">
+                Connect with mentors and expand your network.
+              </p>
             </div>
           </div>
-          <div>
-            <h3 className="headline" style={{ fontSize: '18px', marginBottom: '4px' }}>FinHer Score</h3>
-            <p className="body-md" style={{ color: 'var(--on-surface-variant)', fontSize: '14px' }}>
-              Your financial literacy progress is looking great!
-            </p>
-          </div>
-        </div>
-      </section>
-    </main>
+        </section>
+      </main>
+    </div>
   );
 }
