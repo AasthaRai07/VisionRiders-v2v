@@ -40,6 +40,7 @@
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 0 24px rgba(194, 24, 91, 0.12), 0 4px 16px rgba(0, 0, 0, 0.04);
   }
   
   /* Glow for CTA */
