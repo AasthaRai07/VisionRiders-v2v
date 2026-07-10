@@ -73,6 +73,7 @@ export default function SkillGapAnalyzer() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState(null);
   const [error, setError] = useState(null);
+  const [expandedDay, setExpandedDay] = useState(null);
   const fileInputRef = useRef(null);
   
   // Autocomplete state
@@ -80,10 +81,56 @@ export default function SkillGapAnalyzer() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredRoles, setFilteredRoles] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [selectedIndustry, setSelectedIndustry] = useState('Tech');
   const dropdownRef = useRef(null);
 
   const config = PERSONA_CONFIG[persona] || PERSONA_CONFIG.professional;
+
+  // Placeholder for missing updateFinHerScore function
+  const updateFinHerScore = (increment) => {
+    console.log(`[Mock] FinHer Score increased by ${increment}`);
+  };
+
+  const toggleDayCompletion = async (dayNumber) => {
+    if (!analysisResult || !analysisResult.id) return;
+    
+    const completedDays = analysisResult.completed_days || [];
+    const isCompleted = completedDays.includes(dayNumber);
+    const newCompleted = !isCompleted;
+    
+    // Optimistic UI Update
+    setAnalysisResult(prev => {
+      const newCompletedDays = newCompleted 
+        ? [...(prev.completed_days || []), dayNumber]
+        : (prev.completed_days || []).filter(d => d !== dayNumber);
+        
+      return { ...prev, completed_days: newCompletedDays };
+    });
+    
+    if (newCompleted) {
+      updateFinHerScore(5); // Increment score by 5
+    }
+    
+    try {
+      const res = await fetch(`${API_BASE}/skill-gap/${analysisResult.id}/toggle-day`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ day: dayNumber, completed: newCompleted })
+      });
+      
+      if (!res.ok) {
+        throw new Error('Failed to update completion status');
+      }
+    } catch (err) {
+      console.error("Toggle error:", err);
+      // Revert on failure (simplified)
+      setAnalysisResult(prev => {
+        const newCompletedDays = !newCompleted 
+          ? [...(prev.completed_days || []), dayNumber]
+          : (prev.completed_days || []).filter(d => d !== dayNumber);
+        return { ...prev, completed_days: newCompletedDays };
+      });
+    }
+  };
 
   // ─── Fetch user profile on mount ───────────────────────────────────────
   useEffect(() => {
@@ -105,6 +152,25 @@ export default function SkillGapAnalyzer() {
       }
     }
     fetchProfile();
+  }, []);
+
+  // ─── Fetch latest report on mount ──────────────────────────────────────
+  useEffect(() => {
+    async function fetchLatestReport() {
+      try {
+        const res = await fetch(`${API_BASE}/skill-gap/demo-user-123/latest`, { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.report) {
+            setAnalysisResult(data.report);
+            setSelectedRole(data.report.target_role || '');
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch latest report:", err);
+      }
+    }
+    fetchLatestReport();
   }, []);
 
   // ─── Fetch target roles on mount ───────────────────────────────────────
@@ -150,14 +216,7 @@ export default function SkillGapAnalyzer() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [dropdownRef]);
 
-  // Default to first role when config changes
-  useEffect(() => {
-    if (config.roles.length > 0 && !selectedRole) {
-      const defRole = config.roles[1] || config.roles[0];
-      setSelectedRole(defRole);
-      setSearchQuery(defRole);
-    }
-  }, [config, selectedRole]);
+  // No default role, let the user choose or type
 
   // ─── File handling ─────────────────────────────────────────────────────
   const handleFileSelect = (file) => {
@@ -194,17 +253,36 @@ export default function SkillGapAnalyzer() {
     setAnalysisResult(null);
 
     try {
-      // Read file as text
-      const text = await resumeFile.text();
+      const isPdf = resumeFile.type === 'application/pdf';
+      let resumeData = '';
+      
+      if (isPdf) {
+        resumeData = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const result = reader.result;
+            const base64 = result.split(',')[1];
+            resolve(base64);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(resumeFile);
+        });
+      } else {
+        resumeData = await resumeFile.text();
+      }
+      
+      const matchedRole = allRoles.find(r => r.roleName.toLowerCase() === selectedRole.toLowerCase());
+      const derivedIndustry = matchedRole ? matchedRole.industry : 'Tech';
       
       const res = await fetch(`${API_BASE}/skill-gap/analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          resume_text: text,
+          resume_text: resumeData,
+          is_pdf: isPdf,
           target_role: selectedRole,
           user_type: persona || 'professional',
-          industry: selectedIndustry
+          industry: derivedIndustry
         })
       });
 
@@ -216,7 +294,9 @@ export default function SkillGapAnalyzer() {
       const data = await res.json();
       setAnalysisResult(data);
     } catch (err) {
-      console.error("Analysis failed:", err);
+      if (err.message !== 'AI_SERVICE_UNAVAILABLE') {
+        console.error("Analysis failed:", err);
+      }
       setError(err.message || 'Something went wrong. Please try again.');
     } finally {
       setIsAnalyzing(false);
@@ -367,7 +447,6 @@ export default function SkillGapAnalyzer() {
                       className="px-4 py-3 hover:bg-white/10 cursor-pointer flex justify-between items-center border-b border-white/5 last:border-0"
                       onClick={() => {
                         setSelectedRole(role.roleName);
-                        setSelectedIndustry(role.industry);
                         setSearchQuery(role.roleName);
                         setShowDropdown(false);
                       }}
@@ -401,8 +480,6 @@ export default function SkillGapAnalyzer() {
                       checked={selectedRole === role}
                       onChange={() => {
                         setSelectedRole(role);
-                        const matched = allRoles.find(r => r.roleName === role);
-                        setSelectedIndustry(matched ? matched.industry : 'Design & Product');
                         setSearchQuery(role);
                       }}
                     />
@@ -443,7 +520,20 @@ export default function SkillGapAnalyzer() {
             </button>
           )}
           
-          {error && (
+          {error && error === 'AI_SERVICE_UNAVAILABLE' ? (
+            <div className="mt-4 p-6 rounded-2xl bg-white/5 border border-white/10 text-center flex flex-col items-center justify-center gap-4">
+              <div className="w-8 h-8 border-2 border-primary/50 border-t-primary rounded-full animate-spin"></div>
+              <p className="text-on-surface-variant text-sm">
+                This is taking longer than usual — please try again in a moment.
+              </p>
+              <button
+                onClick={handleAnalyze}
+                className="px-6 py-2 rounded-full border border-glass-border bg-white/10 hover:bg-white/20 transition-colors text-sm font-medium"
+              >
+                Retry
+              </button>
+            </div>
+          ) : error && (
             <div className="mt-2 p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm flex items-center gap-2">
               <span className="material-symbols-outlined text-lg">error</span>
               {error}
@@ -527,49 +617,95 @@ export default function SkillGapAnalyzer() {
               <div className="absolute top-[42px] left-8 right-8 h-[2px] border-t-2 border-dotted border-white/20 -z-10 min-w-[600px]"></div>
               
               <div className="flex justify-between min-w-[600px] relative">
-                {analysisResult.seven_day_plan.slice(0, 7).map((dayItem, index) => {
-                  const isFirst = index === 0;
-                  const isCurrent = index === 0; // First day is "today"
-                  const isFuture = index > 0;
+                {analysisResult.seven_day_plan.slice(0, 7).map((dayItem) => {
+                  const dayNum = dayItem.day;
+                  const completedDays = analysisResult.completed_days || [];
+                  const isCompleted = completedDays.includes(dayNum);
+                  
+                  // "Current" is the first day that is not completed
+                  const isCurrent = !isCompleted && (
+                    dayNum === 1 || 
+                    analysisResult.seven_day_plan.slice(0, dayNum - 1).every(d => completedDays.includes(d.day))
+                  );
+                  
+                  const isFuture = !isCompleted && !isCurrent;
+                  
+                  const isExpanded = expandedDay === dayNum;
                   
                   return (
-                    <div key={index} className={`flex flex-col items-center gap-3 group ${isCurrent ? 'w-32 cursor-pointer relative' : 'w-24'}`}>
-                      {/* Day indicator dot */}
-                      {isCurrent ? (
+                    <div key={dayNum} className={`flex flex-col items-center gap-3 relative cursor-pointer group ${isCurrent ? 'w-32' : 'w-24'}`} onClick={() => setExpandedDay(isExpanded ? null : dayNum)}>
+                      {isCompleted ? (
                         <>
-                          <div className="absolute top-12 w-48 bg-glass-overlay backdrop-blur-md rounded-xl p-3 shadow-xl border border-glass-border opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto z-20 translate-y-2 group-hover:translate-y-0 duration-200">
-                            <p className="text-xs text-[#FFB300] font-bold mb-1">START HERE</p>
-                            <p className="text-sm font-medium mb-2 text-on-surface">{dayItem.skill}</p>
-                            {dayItem.resource_link && (
-                              <a href={`https://www.google.com/search?q=${encodeURIComponent(dayItem.resource_link)}`} target="_blank" rel="noopener noreferrer" className="w-full bg-[#FFB300] text-[#320047] font-semibold text-xs py-1.5 rounded-lg flex items-center justify-center gap-1">
-                                <span className="material-symbols-outlined text-[14px]">search</span> Find Course
-                              </a>
-                            )}
+                          <div className={`w-10 h-10 rounded-full bg-success-emerald/20 text-success-emerald flex items-center justify-center relative z-10 border ${isExpanded ? 'border-success-emerald ring-2 ring-success-emerald/50' : 'border-success-emerald/30'} group-hover:bg-success-emerald/30 transition-all`}>
+                            <span className="material-symbols-outlined text-xl">check_circle</span>
                           </div>
-                          <div className="w-10 h-10 rounded-full bg-[#FFB300] text-[#320047] flex items-center justify-center animate-pulse-amber relative z-10 font-bold">
+                          <div className="text-center">
+                            <p className="font-label-sm text-label-sm text-success-emerald font-bold">DAY {dayNum}</p>
+                            <p className="text-sm font-medium mt-1 max-w-[100px] truncate text-on-surface-variant line-through">{dayItem.skill}</p>
+                          </div>
+                        </>
+                      ) : isCurrent ? (
+                        <>
+                          <div className={`w-10 h-10 rounded-full bg-[#FFB300] text-[#320047] flex items-center justify-center animate-pulse-amber relative z-10 font-bold group-hover:scale-110 transition-transform ${isExpanded ? 'ring-4 ring-[#FFB300]/30' : ''}`}>
                             <span className="text-xl">✦</span>
                           </div>
                           <div className="text-center">
-                            <p className="font-label-sm text-label-sm text-[#FFB300] font-bold">DAY {dayItem.day} (TODAY)</p>
+                            <p className="font-label-sm text-label-sm text-[#FFB300] font-bold">DAY {dayNum} (TODAY)</p>
                             <p className="text-sm font-medium mt-1 max-w-[120px] truncate">{dayItem.skill}</p>
                           </div>
                         </>
                       ) : (
                         <>
-                          <div className="w-8 h-8 rounded-full bg-white/10 text-on-surface-variant flex items-center justify-center relative z-10">
-                            <span className="text-lg">✦</span>
+                          <div className={`w-8 h-8 rounded-full bg-white/5 border text-on-surface-variant flex items-center justify-center relative z-10 group-hover:bg-white/10 transition-all mt-1 ${isExpanded ? 'border-primary ring-2 ring-primary/50 text-primary' : 'border-white/20'}`}>
+                            <span className="text-lg opacity-50 group-hover:opacity-100">✦</span>
                           </div>
-                          <div className={`text-center ${isFuture ? 'opacity-50' : ''}`}>
-                            <p className="font-label-sm text-label-sm">DAY {dayItem.day}</p>
+                          <div className={`text-center transition-opacity ${isExpanded ? 'opacity-100' : 'opacity-50 group-hover:opacity-100'}`}>
+                            <p className={`font-label-sm text-label-sm ${isExpanded ? 'text-primary font-bold' : ''}`}>DAY {dayNum}</p>
                             <p className="text-sm mt-1 max-w-[96px] truncate">{dayItem.skill}</p>
                           </div>
                         </>
+                      )}
+                      
+                      {/* Selection Indicator Arrow */}
+                      {isExpanded && (
+                        <div className="absolute -bottom-4 w-4 h-4 bg-glass-overlay border-t border-l border-glass-border rotate-45 z-0"></div>
                       )}
                     </div>
                   );
                 })}
               </div>
             </div>
+            
+            {/* Inline Detail Card for Expanded Day */}
+            {expandedDay && (() => {
+              const dayItem = analysisResult.seven_day_plan.find(d => d.day === expandedDay);
+              if (!dayItem) return null;
+              
+              const isCompleted = (analysisResult.completed_days || []).includes(expandedDay);
+              
+              return (
+                <div className="mt-2 p-6 bg-glass-overlay border border-glass-border rounded-xl animate-slide-up flex flex-col md:flex-row gap-6 justify-between items-start md:items-center relative z-10">
+                  <div>
+                    <h4 className="font-bold text-lg text-on-surface mb-1">Day {expandedDay}: <span className="text-primary">{dayItem.skill}</span></h4>
+                    <p className="text-sm text-on-surface-variant mb-4 max-w-2xl">
+                      {dayItem.description || `Focus on learning ${dayItem.skill} today. Click the resource link to get started.`}
+                    </p>
+                    {dayItem.resource_link && (
+                      <a href={dayItem.resource_link.startsWith('http') ? dayItem.resource_link : `https://www.google.com/search?q=${encodeURIComponent(dayItem.resource_link)}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm font-medium text-[#FFB300] hover:underline">
+                        <span className="material-symbols-outlined text-sm">menu_book</span> Open Resource
+                      </a>
+                    )}
+                  </div>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); toggleDayCompletion(expandedDay); }}
+                    className={`px-6 py-3 rounded-full font-bold text-sm flex items-center gap-2 transition-colors whitespace-nowrap ${isCompleted ? 'bg-white/10 text-on-surface hover:bg-white/20' : 'bg-success-emerald text-background hover:bg-success-emerald/90'}`}
+                  >
+                    <span className="material-symbols-outlined text-lg">{isCompleted ? 'undo' : 'check'}</span>
+                    {isCompleted ? 'Mark as Incomplete' : 'Mark as Complete'}
+                  </button>
+                </div>
+              );
+            })()}
           </section>
         )}
 

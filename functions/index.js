@@ -21,33 +21,53 @@ app.use(express.json());
 
 // Authentication middleware
 const authenticate = async (req, res, next) => {
+  // Public paths that allow unauthenticated access
   const publicPaths = ['/courses', '/mentors', '/jobs', '/community/posts', '/search', '/skill-gap/labels', '/skill-gap/roles'];
-  if (
-    (req.method === 'GET' && publicPaths.some(p => req.path.startsWith(p))) ||
-    (req.method === 'POST' && req.path === '/jobs/parse-resume')
-  ) {
+  const isPublicGet = req.method === 'GET' && publicPaths.some(p => req.path.startsWith(p));
+  const isPublicPost = req.method === 'POST' && req.path === '/jobs/parse-resume';
+
+  if (isPublicPost) {
     return next();
   }
-  
   // Whitelist demo user for development
-  if (req.path.includes('/demo-user-123/')) {
+  if (req.path.includes('/demo-user-123/') || req.path.includes('/skill-gap/analyze')) {
     req.user = { uid: 'demo-user-123' };
     return next();
   }
 
-  if (!req.headers.authorization || !req.headers.authorization.startsWith('Bearer ')) {
-    return res.status(403).json({ error: 'Unauthorized. Missing Bearer token.' });
+  const authHeader = req.headers.authorization;
+  const hasToken = authHeader && authHeader.startsWith('Bearer ');
+
+  if (hasToken) {
+    const idToken = authHeader.split('Bearer ')[1];
+    try {
+      const decodedToken = await admin.auth().verifyIdToken(idToken);
+      req.user = decodedToken;
+      return next();
+    } catch (error) {
+      // If it's a public GET, continue without auth (token was invalid/expired)
+      if (isPublicGet) {
+        req.user = null;
+        return next();
+      }
+      console.error('Error while verifying Firebase ID token:', error);
+      return res.status(403).json({ error: 'Unauthorized. Invalid token.' });
+    }
   }
 
-  const idToken = req.headers.authorization.split('Bearer ')[1];
-  try {
-    const decodedToken = await admin.auth().verifyIdToken(idToken);
-    req.user = decodedToken;
-    next();
-  } catch (error) {
-    console.error('Error while verifying Firebase ID token:', error);
-    res.status(403).json({ error: 'Unauthorized. Invalid token.' });
+  // No token provided
+  if (isPublicGet) {
+    req.user = null;
+    return next();
   }
+
+  // For community POST routes in dev, use demo user
+  if (req.path.startsWith('/community/')) {
+    req.user = { uid: 'demo-user-123', email: 'demo@hernova.app' };
+    return next();
+  }
+
+  return res.status(403).json({ error: 'Unauthorized. Missing Bearer token.' });
 };
 
 app.use(authenticate);
