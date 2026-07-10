@@ -22,12 +22,19 @@ app.use(express.json());
 
 // Authentication middleware
 const authenticate = async (req, res, next) => {
+  console.log(`[Auth Middleware Debug] path=${req.path} method=${req.method}`);
+
   // Public paths that allow unauthenticated access
   const publicPaths = ['/courses', '/mentors', '/jobs', '/community/posts', '/search', '/skill-gap/labels', '/skill-gap/roles', '/finance'];
   const isPublicGet = req.method === 'GET' && publicPaths.some(p => req.path.startsWith(p));
   const isPublicPost = req.method === 'POST' && req.path === '/jobs/parse-resume';
 
-  if (isPublicPost || req.path.startsWith('/finance')) {
+  if (
+    isPublicGet ||
+    isPublicPost ||
+    req.path.startsWith('/finance') ||
+    req.path.includes('/finance/')
+  ) {
     return next();
   }
   // Whitelist demo user for development
