@@ -28,7 +28,7 @@ export default function LearningHub() {
           setUserProgress(data.progress || []);
         }
       } catch (error) {
-        console.error("Failed to fetch progress:", error);
+        console.warn("Failed to fetch progress:", error);
       } finally {
         setLoadingProgress(false);
       }
@@ -54,7 +54,7 @@ export default function LearningHub() {
           setSearchResults(data.results || []);
         }
       } catch (error) {
-        console.error("Failed to search:", error);
+        console.warn("Failed to search:", error);
       } finally {
         setIsSearching(false);
       }
@@ -73,7 +73,7 @@ export default function LearningHub() {
         body: JSON.stringify({ courseId, currentModule: 1, totalModules: 5 }) // dummy values
       });
     } catch (err) {
-      console.error(err);
+      console.warn(err);
     }
     // Navigate to course (in real app, this might be a local route)
     if (url) {
@@ -87,8 +87,8 @@ export default function LearningHub() {
         setLoading(true);
         // Using localhost emulator API
         const url = activeCategory === "All Courses" 
-          ? 'http://127.0.0.1:5001/hernova-13f01/us-central1/api/courses'
-          : `http://127.0.0.1:5001/hernova-13f01/us-central1/api/courses?category=${encodeURIComponent(activeCategory)}`;
+          ? 'http://localhost:3001/api/courses'
+          : `http://localhost:3001/api/courses?category=${encodeURIComponent(activeCategory)}`;
           
         const res = await fetch(url, { cache: 'no-store' });
         if (res.ok) {
@@ -96,7 +96,7 @@ export default function LearningHub() {
           setCourses(data.courses || []);
         }
       } catch (error) {
-        console.error("Failed to fetch courses:", error);
+        console.warn("Failed to fetch courses:", error);
       } finally {
         setLoading(false);
       }

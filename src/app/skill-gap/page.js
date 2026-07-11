@@ -254,6 +254,12 @@ export default function SkillGapAnalyzer() {
 
     try {
       const isPdf = resumeFile.type === 'application/pdf';
+      const isText = resumeFile.type === 'text/plain';
+      
+      if (!isPdf && !isText && !resumeFile.name.endsWith('.txt') && !resumeFile.name.endsWith('.pdf')) {
+        throw new Error('Please upload a PDF or text file (.txt). Images and other formats are not supported yet.');
+      }
+      
       let resumeData = '';
       
       if (isPdf) {
@@ -418,6 +424,12 @@ export default function SkillGapAnalyzer() {
               )}
             </div>
           </div>
+          
+          {error && (
+            <div className="mt-2 text-center text-error font-medium text-sm p-3 bg-error/10 border border-error/20 rounded-xl">
+              {error}
+            </div>
+          )}
           
           {/* Target Role Autocomplete */}
           <div className="flex flex-col gap-3 mt-4" ref={dropdownRef}>

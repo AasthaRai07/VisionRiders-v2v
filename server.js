@@ -77,8 +77,227 @@ const memDb = {
     }
   },
   courses: {
-    'module3': { id: 'module3', title: 'Basics of Mutual Funds', description: 'Mutual fund basics.', category: 'Finance', total_lessons: 5 }
-  },
+    "course_1": {
+        "id": "course_1",
+        "courseName": "CS50: Introduction to Computer Science",
+        "goodFor": "Harvard's renowned intro to computer science and programming fundamentals.",
+        "category": "Tech & Data",
+        "platform": "edX",
+        "courseUrl": "https://www.edx.org/cs50",
+        "pricing": "Free",
+        "thumbnailUrl": ""
+    },
+    "course_2": {
+        "id": "course_2",
+        "courseName": "Python for Everybody",
+        "goodFor": "Learn Python programming from the ground up, designed for complete beginners.",
+        "category": "Tech & Data",
+        "platform": "Coursera",
+        "courseUrl": "https://www.coursera.org/specializations/python",
+        "pricing": "Free",
+        "thumbnailUrl": ""
+    },
+    "course_3": {
+        "id": "course_3",
+        "courseName": "Responsive Web Design",
+        "goodFor": "Master HTML, CSS, and modern UI principles with this beginner-friendly course.",
+        "category": "Tech & Data",
+        "platform": "freeCodeCamp",
+        "courseUrl": "https://www.freecodecamp.org/learn/2022/responsive-web-design/",
+        "pricing": "Free",
+        "thumbnailUrl": ""
+    },
+    "course_4": {
+        "id": "course_4",
+        "courseName": "Data Analytics with Python",
+        "goodFor": "Introduction to data visualisation and analytics using Python.",
+        "category": "Tech & Data",
+        "platform": "NPTEL",
+        "courseUrl": "https://nptel.ac.in/",
+        "pricing": "Free",
+        "thumbnailUrl": ""
+    },
+    "course_5": {
+        "id": "course_5",
+        "courseName": "SQL for Data Science",
+        "goodFor": "Foundational SQL skills for data analyst roles.",
+        "category": "Tech & Data",
+        "platform": "Coursera",
+        "courseUrl": "https://www.coursera.org/learn/sql-for-data-science",
+        "pricing": "Free",
+        "thumbnailUrl": ""
+    },
+    "course_6": {
+        "id": "course_6",
+        "courseName": "Machine Learning Specialization",
+        "goodFor": "Andrew Ng's foundational ML course for data science and ML engineering tracks.",
+        "category": "Tech & Data",
+        "platform": "Coursera",
+        "courseUrl": "https://www.coursera.org/specializations/machine-learning-introduction",
+        "pricing": "Free",
+        "thumbnailUrl": ""
+    },
+    "course_7": {
+        "id": "course_7",
+        "courseName": "Financial Markets",
+        "goodFor": "Demystifying stocks, bonds, and creating a portfolio that works for your goals.",
+        "category": "Financial Literacy",
+        "platform": "Coursera",
+        "courseUrl": "https://www.coursera.org/learn/financial-markets-global",
+        "pricing": "Free",
+        "thumbnailUrl": ""
+    },
+    "course_8": {
+        "id": "course_8",
+        "courseName": "Personal & Family Financial Planning",
+        "goodFor": "Budgeting fundamentals and long-term financial planning basics.",
+        "category": "Financial Literacy",
+        "platform": "Coursera",
+        "courseUrl": "https://www.coursera.org/learn/personal-family-financial-planning",
+        "pricing": "Free",
+        "thumbnailUrl": ""
+    },
+    "course_9": {
+        "id": "course_9",
+        "courseName": "Khan Academy: Personal Finance",
+        "goodFor": "Self-paced, beginner-friendly personal finance basics.",
+        "category": "Financial Literacy",
+        "platform": "Khan Academy",
+        "courseUrl": "https://www.khanacademy.org/college-careers-more/personal-finance",
+        "pricing": "Free",
+        "thumbnailUrl": ""
+    },
+    "course_10": {
+        "id": "course_10",
+        "courseName": "Negotiating Your First Tech Salary",
+        "goodFor": "Negotiation, mediation and conflict resolution strategies for the workplace.",
+        "category": "Financial Literacy",
+        "platform": "Coursera",
+        "courseUrl": "https://www.coursera.org/learn/negotiation-mediation-conflict-resolution",
+        "pricing": "Free",
+        "thumbnailUrl": ""
+    },
+    "course_11": {
+        "id": "course_11",
+        "courseName": "Resume Writing & LinkedIn Optimization",
+        "goodFor": "Craft a standout resume and LinkedIn profile for your career comeback.",
+        "category": "Career Skills",
+        "platform": "Coursera",
+        "courseUrl": "https://www.coursera.org/",
+        "pricing": "Free",
+        "thumbnailUrl": ""
+    },
+    "course_12": {
+        "id": "course_12",
+        "courseName": "Successful Career Development",
+        "goodFor": "Broad career-planning strategies for navigating your professional path.",
+        "category": "Career Skills",
+        "platform": "Coursera",
+        "courseUrl": "https://www.coursera.org/learn/career-development-planning",
+        "pricing": "Free",
+        "thumbnailUrl": ""
+    },
+    "course_13": {
+        "id": "course_13",
+        "courseName": "Imposter Syndrome & You",
+        "goodFor": "Strategies to overcome self-doubt and own your achievements in the workplace.",
+        "category": "Career Skills",
+        "platform": "YouTube (curated)",
+        "courseUrl": "https://www.youtube.com/",
+        "pricing": "Free",
+        "thumbnailUrl": ""
+    },
+    "course_14": {
+        "id": "course_14",
+        "courseName": "Interview Skills: Master the Interview",
+        "goodFor": "Build interview fluency and confidence, ties directly into Mock Interview practice.",
+        "category": "Career Skills",
+        "platform": "Coursera",
+        "courseUrl": "https://www.coursera.org/",
+        "pricing": "Free",
+        "thumbnailUrl": ""
+    },
+    "course_15": {
+        "id": "course_15",
+        "courseName": "The Science of Well-Being",
+        "goodFor": "Yale's widely-cited course on happiness and building better habits.",
+        "category": "Wellness",
+        "platform": "Coursera",
+        "courseUrl": "https://www.coursera.org/learn/the-science-of-well-being",
+        "pricing": "Free",
+        "thumbnailUrl": ""
+    },
+    "course_16": {
+        "id": "course_16",
+        "courseName": "Mindfulness and Well-being",
+        "goodFor": "Practical mindfulness techniques for stress and burnout management.",
+        "category": "Wellness",
+        "platform": "Coursera",
+        "courseUrl": "https://www.coursera.org/",
+        "pricing": "Free",
+        "thumbnailUrl": ""
+    },
+    "course_17": {
+        "id": "course_17",
+        "courseName": "Women in Leadership: Inspiring Positive Change",
+        "goodFor": "Leadership development designed around women's career trajectories.",
+        "category": "Leadership",
+        "platform": "Coursera",
+        "courseUrl": "https://www.coursera.org/learn/women-in-leadership",
+        "pricing": "Free",
+        "thumbnailUrl": ""
+    },
+    "course_18": {
+        "id": "course_18",
+        "courseName": "Leading People and Teams",
+        "goodFor": "Michigan's specialization on team leadership and management fundamentals.",
+        "category": "Leadership",
+        "platform": "Coursera",
+        "courseUrl": "https://www.coursera.org/specializations/leading-teams",
+        "pricing": "Free",
+        "thumbnailUrl": ""
+    },
+    "course_19": {
+        "id": "course_19",
+        "courseName": "Full-Stack Web Development BootCamp",
+        "goodFor": "Comprehensive guide to modern web development.",
+        "category": "Tech & Data",
+        "platform": "Coursera",
+        "courseUrl": "#",
+        "pricing": "Paid",
+        "thumbnailUrl": ""
+    },
+    "course_20": {
+        "id": "course_20",
+        "courseName": "Introduction to Generative AI",
+        "goodFor": "Learn the fundamentals of Generative AI.",
+        "category": "Tech & Data",
+        "platform": "Google Cloud",
+        "courseUrl": "#",
+        "pricing": "Free",
+        "thumbnailUrl": ""
+    },
+    "course_21": {
+        "id": "course_21",
+        "courseName": "Strategic Leadership in Tech",
+        "goodFor": "Lead tech teams effectively.",
+        "category": "Leadership",
+        "platform": "NPTEL",
+        "courseUrl": "#",
+        "pricing": "Free",
+        "thumbnailUrl": ""
+    },
+    "course_22": {
+        "id": "course_22",
+        "courseName": "Yoga and Meditation for Office Workers",
+        "goodFor": "Stay healthy and focused.",
+        "category": "Wellness",
+        "platform": "YouTube",
+        "courseUrl": "#",
+        "pricing": "Free",
+        "thumbnailUrl": ""
+    }
+},
   course_progress: {
     'aditi_123': { module3: 45 }
   },
@@ -691,6 +910,16 @@ setInterval(() => {
     });
   }
 }, 24 * 60 * 60 * 1000);
+
+// Endpoint route GET /api/courses
+app.get('/api/courses', (req, res) => {
+  const category = req.query.category;
+  let courses = Object.values(memDb.courses || {});
+  if (category) {
+    courses = courses.filter(c => c.category === category);
+  }
+  res.json({ courses });
+});
 
 // Endpoint route GET /api/schemes/women
 app.get('/api/schemes/women', (req, res) => {

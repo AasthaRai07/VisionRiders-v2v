@@ -38,7 +38,7 @@ export default function MentorAI() {
           }
         ]);
       } catch (err) {
-        console.error('Error fetching greeting:', err);
+        console.warn('Error fetching greeting:', err);
         setMessages([
           {
             id: 1,
@@ -114,7 +114,7 @@ export default function MentorAI() {
         }
       ]);
     } catch (err) {
-      console.error('Chat error:', err);
+      console.warn('Chat error:', err);
       setMessages(prev => [
         ...prev,
         {

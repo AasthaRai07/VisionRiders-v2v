@@ -1,7 +1,7 @@
 const { onRequest } = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 
-admin.initializeApp();
+admin.initializeApp({ projectId: 'hernova-13f01' });
 
 const express = require("express");
 const cors = require("cors");

@@ -177,12 +177,13 @@ export default function FinanceHub() {
     try {
       setLoading(true);
       const res = await fetch('http://127.0.0.1:5001/hernova-13f01/us-central1/api/finance/demo-user-123/dashboard');
+      if (!res.ok) throw new Error("API request failed");
       const data = await res.json();
       setDashboardData(data.profile);
-      setGoals(data.goals);
-      setExpenses(data.expenses);
+      setGoals(data.goals || []);
+      setExpenses(data.expenses || []);
     } catch (err) {
-      console.error("Dashboard load failed, loading fallback data", err);
+      console.warn("Dashboard load failed, loading fallback data", err);
       // Mock Fallbacks
       setDashboardData({
         finherScore: 75,
@@ -275,7 +276,7 @@ export default function FinanceHub() {
         fetchDashboard();
       }
     } catch (err) {
-      console.error(err);
+      console.warn(err);
     }
   };
 
@@ -293,7 +294,7 @@ export default function FinanceHub() {
         fetchDashboard();
       }
     } catch (err) {
-      console.error(err);
+      console.warn(err);
     }
   };
 
@@ -307,7 +308,7 @@ export default function FinanceHub() {
         fetchDashboard();
       }
     } catch (err) {
-      console.error(err);
+      console.warn(err);
     }
   };
 
@@ -325,7 +326,7 @@ export default function FinanceHub() {
         fetchDashboard();
       }
     } catch (err) {
-      console.error(err);
+      console.warn(err);
     }
   };
 
@@ -386,7 +387,7 @@ export default function FinanceHub() {
       `);
       reportWindow.document.close();
     } catch (err) {
-      console.error(err);
+      console.warn(err);
     } finally {
       setCopilotTyping(false);
     }
@@ -404,7 +405,7 @@ export default function FinanceHub() {
       const data = await res.json();
       setAdvisorRecommendation(data);
     } catch (err) {
-      console.error(err);
+      console.warn(err);
     } finally {
       setAdvisorLoading(false);
     }
@@ -455,7 +456,7 @@ export default function FinanceHub() {
       setAllSchemes(data.schemes || []);
       setLastUpdated(data.lastUpdated || '');
     } catch (err) {
-      console.error("Failed to load real OGD schemes:", err);
+      console.warn("Failed to load real OGD schemes:", err);
     } finally {
       setSchemesLoading(false);
     }
@@ -523,7 +524,7 @@ export default function FinanceHub() {
         fetchBookmarks();
       }
     } catch (err) {
-      console.error(err);
+      console.warn(err);
     }
   };
 
@@ -539,7 +540,7 @@ export default function FinanceHub() {
       if (data.badges) setBadges(data.badges);
       alert(`Lesson completed! Unlocked badges: ${data.badges.join(', ')}`);
     } catch (err) {
-      console.error(err);
+      console.warn(err);
     }
   };
 
@@ -557,7 +558,7 @@ export default function FinanceHub() {
       setParseResults(data.records);
       fetchDashboard();
     } catch (err) {
-      console.error(err);
+      console.warn(err);
     } finally {
       setParsing(false);
     }

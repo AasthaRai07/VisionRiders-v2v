@@ -11,7 +11,7 @@ const GROQ_MODEL = 'llama-3.3-70b-versatile';
 
 let fallbackResponses = {};
 try {
-  const fallbackPath = path.join(__dirname, '../../../../fallback_demo_responses.json');
+  const fallbackPath = path.join(__dirname, '../../../fallback_demo_responses.json');
   fallbackResponses = JSON.parse(fs.readFileSync(fallbackPath, 'utf8'));
 } catch (err) {
   console.warn("Failed to load fallback_demo_responses.json", err.message);
